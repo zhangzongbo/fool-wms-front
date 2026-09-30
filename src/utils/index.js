@@ -4,5 +4,4 @@
  * @param {PromiseSettledResult} result
  * @param {*} fallback 失败时的返回值，通常传入当前值以保留旧数据
  */
-export const settledValue = (result, fallback) =>
-  result.status === 'fulfilled' ? (result.value || []) : fallback
+export const settledValue = (result, fallback) => (result.status === 'fulfilled' ? result.value || [] : fallback)

@@ -5,13 +5,15 @@ import { useRefDataStore } from './refData'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(localStorage.getItem('token') || '')
-  const userInfo = ref(JSON.parse(localStorage.getItem('userInfo') || 'null') || {
-    userId: null,
-    username: '',
-    realName: '',
-    roles: [],
-    permissions: []
-  })
+  const userInfo = ref(
+    JSON.parse(localStorage.getItem('userInfo') || 'null') || {
+      userId: null,
+      username: '',
+      realName: '',
+      roles: [],
+      permissions: []
+    }
+  )
 
   // 本次页面加载是否已从服务端刷新过用户信息（localStorage 中的权限可能已过期）
   const infoLoaded = ref(false)

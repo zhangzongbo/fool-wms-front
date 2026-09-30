@@ -10,9 +10,15 @@
         <h1 class="brand-title">仓储管理平台</h1>
         <p class="brand-desc">3PL 多货主 · 全流程作业闭环 · 数据隔离与权限治理</p>
         <ul class="brand-points">
-          <li><el-icon><Select /></el-icon> 入库 / 出库 / 盘点作业一体化</li>
-          <li><el-icon><Select /></el-icon> 多货主库存隔离与乐观锁并发控制</li>
-          <li><el-icon><Select /></el-icon> RBAC 细粒度权限与数据范围管控</li>
+          <li>
+            <el-icon><Select /></el-icon> 入库 / 出库 / 盘点作业一体化
+          </li>
+          <li>
+            <el-icon><Select /></el-icon> 多货主库存隔离与乐观锁并发控制
+          </li>
+          <li>
+            <el-icon><Select /></el-icon> RBAC 细粒度权限与数据范围管控
+          </li>
         </ul>
       </div>
       <div class="brand-glow glow-1"></div>
@@ -30,11 +36,16 @@
             <el-input v-model="form.username" placeholder="用户名" :prefix-icon="User" clearable />
           </el-form-item>
           <el-form-item prop="password">
-            <el-input v-model="form.password" type="password" placeholder="密码" :prefix-icon="Lock" show-password clearable />
+            <el-input
+              v-model="form.password"
+              type="password"
+              placeholder="密码"
+              :prefix-icon="Lock"
+              show-password
+              clearable
+            />
           </el-form-item>
-          <el-button type="primary" class="login-btn" :loading="loading" @click="handleLogin">
-            登 录
-          </el-button>
+          <el-button type="primary" class="login-btn" :loading="loading" @click="handleLogin"> 登 录 </el-button>
         </el-form>
 
         <div v-if="isDev" class="login-tip">
@@ -115,28 +126,81 @@ const handleLogin = async () => {
   align-items: center;
   padding: 0 8%;
 }
-.brand-inner { position: relative; z-index: 2; max-width: 460px; }
-.brand-logo { display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 700; margin-bottom: 40px; }
+.brand-inner {
+  position: relative;
+  z-index: 2;
+  max-width: 460px;
+}
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 40px;
+}
 .brand-mark {
-  width: 42px; height: 42px; border-radius: 12px;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
   background: linear-gradient(135deg, #409eff, #1765ad);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 22px; font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 800;
   box-shadow: 0 8px 20px rgba(64, 158, 255, 0.45);
 }
-.brand-title { font-size: 40px; font-weight: 700; margin-bottom: 16px; letter-spacing: 1px; }
-.brand-desc { font-size: 15px; color: rgba(203, 213, 245, 0.85); margin-bottom: 36px; line-height: 1.7; }
-.brand-points { list-style: none; padding: 0; margin: 0; }
+.brand-title {
+  font-size: 40px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+.brand-desc {
+  font-size: 15px;
+  color: rgba(203, 213, 245, 0.85);
+  margin-bottom: 36px;
+  line-height: 1.7;
+}
+.brand-points {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
 .brand-points li {
-  display: flex; align-items: center; gap: 10px;
-  font-size: 14px; color: rgba(219, 228, 248, 0.92);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: rgba(219, 228, 248, 0.92);
   padding: 10px 0;
 }
-.brand-points .el-icon { color: #67e0a3; font-size: 16px; }
+.brand-points .el-icon {
+  color: #67e0a3;
+  font-size: 16px;
+}
 
-.brand-glow { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.5; }
-.glow-1 { width: 380px; height: 380px; background: #2f6fd6; top: -80px; right: -60px; }
-.glow-2 { width: 300px; height: 300px; background: #17408b; bottom: -100px; left: 20%; }
+.brand-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.5;
+}
+.glow-1 {
+  width: 380px;
+  height: 380px;
+  background: #2f6fd6;
+  top: -80px;
+  right: -60px;
+}
+.glow-2 {
+  width: 300px;
+  height: 300px;
+  background: #17408b;
+  bottom: -100px;
+  left: 20%;
+}
 
 /* 表单区 */
 .login-form-wrap {
@@ -148,26 +212,55 @@ const handleLogin = async () => {
   background: #fff;
   position: relative;
 }
-.login-card { width: 360px; }
-.login-title { font-size: 26px; font-weight: 700; color: var(--brand-secondary); margin-bottom: 8px; }
-.login-subtitle { font-size: 14px; color: var(--brand-text-secondary); margin-bottom: 32px; }
+.login-card {
+  width: 360px;
+}
+.login-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--brand-secondary);
+  margin-bottom: 8px;
+}
+.login-subtitle {
+  font-size: 14px;
+  color: var(--brand-text-secondary);
+  margin-bottom: 32px;
+}
 .login-btn {
-  width: 100%; height: 46px; font-size: 16px; letter-spacing: 4px; margin-top: 8px;
+  width: 100%;
+  height: 46px;
+  font-size: 16px;
+  letter-spacing: 4px;
+  margin-top: 8px;
   border-radius: 8px;
 }
 .login-tip {
-  margin-top: 24px; padding: 12px 14px; border-radius: 8px;
-  background: #f0f7ff; color: var(--brand-text-secondary);
-  font-size: 13px; display: flex; align-items: center; gap: 8px;
+  margin-top: 24px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #f0f7ff;
+  color: var(--brand-text-secondary);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-.login-tip .el-icon { color: var(--brand-primary); }
-.login-tip b { color: var(--brand-primary); }
+.login-tip .el-icon {
+  color: var(--brand-primary);
+}
+.login-tip b {
+  color: var(--brand-primary);
+}
 .login-copyright {
-  position: absolute; bottom: 28px;
-  font-size: 12px; color: var(--brand-text-secondary);
+  position: absolute;
+  bottom: 28px;
+  font-size: 12px;
+  color: var(--brand-text-secondary);
 }
 
 @media (max-width: 1024px) {
-  .login-brand { display: none; }
+  .login-brand {
+    display: none;
+  }
 }
 </style>

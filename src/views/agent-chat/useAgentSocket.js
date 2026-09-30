@@ -58,8 +58,13 @@ export const parseFrame = (raw) => {
     return { kind: 'session', text: dataStr }
   }
   if (
-    type === 'done' || type === 'end' || type === 'finish' || type === 'complete' ||
-    obj.done === true || obj.finished === true || obj.end === true
+    type === 'done' ||
+    type === 'end' ||
+    type === 'finish' ||
+    type === 'complete' ||
+    obj.done === true ||
+    obj.finished === true ||
+    obj.end === true
   ) {
     return { kind: 'done' }
   }

@@ -33,12 +33,7 @@
                 <el-icon><component :is="item.icon" /></el-icon>
                 <span>{{ item.title }}</span>
               </template>
-              <el-menu-item
-                v-for="child in item.children"
-                :key="child.path"
-                :index="child.path"
-                class="menu-item"
-              >
+              <el-menu-item v-for="child in item.children" :key="child.path" :index="child.path" class="menu-item">
                 {{ child.title }}
               </el-menu-item>
             </el-sub-menu>
@@ -174,13 +169,17 @@ const toggleSidebar = () => {
 const handleCommand = async (command) => {
   if (command === 'logout') {
     await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
-      type: 'warning', confirmButtonText: '退出', cancelButtonText: '取消'
-    }).catch(() => 'cancel').then(async (r) => {
-      if (r === 'cancel') return
-      await userStore.logout()
-      ElMessage.success('已退出登录')
-      router.replace('/login')
+      type: 'warning',
+      confirmButtonText: '退出',
+      cancelButtonText: '取消'
     })
+      .catch(() => 'cancel')
+      .then(async (r) => {
+        if (r === 'cancel') return
+        await userStore.logout()
+        ElMessage.success('已退出登录')
+        router.replace('/login')
+      })
   }
 }
 </script>
@@ -222,14 +221,32 @@ const handleCommand = async (command) => {
   box-shadow: 0 6px 16px rgba(64, 158, 255, 0.4);
 }
 
-.logo-info { display: flex; flex-direction: column; line-height: 1.3; }
-.logo-title { font-size: 16px; font-weight: 600; color: #fff; }
-.logo-desc { font-size: 11px; color: rgba(199, 210, 230, 0.7); letter-spacing: 0.5px; }
+.logo-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+.logo-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+.logo-desc {
+  font-size: 11px;
+  color: rgba(199, 210, 230, 0.7);
+  letter-spacing: 0.5px;
+}
 
-.sidebar-scroll { flex: 1; padding: 12px 0; }
-.sidebar-menu { border-right: none; }
+.sidebar-scroll {
+  flex: 1;
+  padding: 12px 0;
+}
+.sidebar-menu {
+  border-right: none;
+}
 
-.menu-item, .menu-sub :deep(.el-sub-menu__title) {
+.menu-item,
+.menu-sub :deep(.el-sub-menu__title) {
   border-radius: 8px;
   margin: 3px 12px;
 }
@@ -247,16 +264,31 @@ const handleCommand = async (command) => {
   background: rgba(64, 158, 255, 0.14);
   color: #fff;
 }
-.menu-item .el-icon, .menu-sub .el-icon { font-size: 17px; }
+.menu-item .el-icon,
+.menu-sub .el-icon {
+  font-size: 17px;
+}
 
 .sidebar-footer {
   padding: 16px 18px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   font-size: 12px;
 }
-.footer-title { font-size: 12px; color: rgba(199, 210, 230, 0.6); margin-bottom: 4px; }
-.footer-text { font-size: 13px; font-weight: 600; color: #77b5ff; margin-bottom: 2px; }
-.footer-sub { font-size: 11px; color: rgba(199, 210, 230, 0.55); }
+.footer-title {
+  font-size: 12px;
+  color: rgba(199, 210, 230, 0.6);
+  margin-bottom: 4px;
+}
+.footer-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #77b5ff;
+  margin-bottom: 2px;
+}
+.footer-sub {
+  font-size: 11px;
+  color: rgba(199, 210, 230, 0.55);
+}
 
 .header {
   background: #fff;
@@ -268,23 +300,62 @@ const handleCommand = async (command) => {
   border-bottom: 1px solid rgba(15, 23, 42, 0.05);
   z-index: 10;
 }
-.header-left { display: flex; align-items: center; gap: 16px; }
-.collapse-btn { color: var(--brand-secondary); }
-.header-breadcrumb { display: flex; flex-direction: column; gap: 4px; }
-.page-title { font-size: 18px; font-weight: 600; color: var(--brand-secondary); }
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.collapse-btn {
+  color: var(--brand-secondary);
+}
+.header-breadcrumb {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.page-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--brand-secondary);
+}
 
-.header-right { display: flex; align-items: center; }
-.env-tag { border-color: rgba(23, 101, 173, 0.24); color: var(--brand-primary); }
+.header-right {
+  display: flex;
+  align-items: center;
+}
+.env-tag {
+  border-color: rgba(23, 101, 173, 0.24);
+  color: var(--brand-primary);
+}
 .user-info {
-  display: flex; align-items: center; gap: 8px; cursor: pointer;
-  padding: 6px 12px 6px 6px; border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 6px 12px 6px 6px;
+  border-radius: 999px;
   transition: background-color 0.2s ease;
 }
-.user-info:hover { background: #f0f5fb; }
-.user-avatar { background: linear-gradient(135deg, #409eff, #1765ad); font-weight: 600; }
-.user-name { font-size: 14px; color: var(--brand-secondary); font-weight: 500; }
-.dropdown-user { display: flex; flex-direction: column; line-height: 1.5; }
-.dropdown-user small { color: var(--brand-text-secondary); }
+.user-info:hover {
+  background: #f0f5fb;
+}
+.user-avatar {
+  background: linear-gradient(135deg, #409eff, #1765ad);
+  font-weight: 600;
+}
+.user-name {
+  font-size: 14px;
+  color: var(--brand-secondary);
+  font-weight: 500;
+}
+.dropdown-user {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.5;
+}
+.dropdown-user small {
+  color: var(--brand-text-secondary);
+}
 
 .main-content {
   background: transparent;
@@ -292,5 +363,9 @@ const handleCommand = async (command) => {
   height: calc(100vh - 60px);
   overflow: hidden;
 }
-.page-wrapper { height: 100%; overflow: auto; background: var(--brand-bg); }
+.page-wrapper {
+  height: 100%;
+  overflow: auto;
+  background: var(--brand-bg);
+}
 </style>

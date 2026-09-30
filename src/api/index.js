@@ -138,8 +138,7 @@ export const userApi = {
   add: (data) => request({ url: '/user/add', method: 'post', data }),
   update: (id, data) => request({ url: `/user/${id}`, method: 'put', data }),
   delete: (id) => request({ url: `/user/${id}`, method: 'delete' }),
-  resetPassword: (id, password) =>
-    request({ url: `/user/${id}/password`, method: 'put', data: { password } }),
+  resetPassword: (id, password) => request({ url: `/user/${id}/password`, method: 'put', data: { password } }),
   getRoleIds: (id) => request({ url: `/user/${id}/roles`, method: 'get' }),
   getOwnerIds: (id) => request({ url: `/user/${id}/owners`, method: 'get' }),
   assignRoles: (id, roleIds) => request({ url: `/user/${id}/roles`, method: 'post', data: { roleIds } }),

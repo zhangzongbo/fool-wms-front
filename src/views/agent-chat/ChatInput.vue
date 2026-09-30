@@ -11,14 +11,12 @@
     <div class="input-actions">
       <span class="input-hint">会话：{{ sessionId || '首轮自动分配' }}</span>
       <div class="input-btns">
-        <el-button v-if="streaming" type="danger" plain size="default" :icon="CloseBold" @click="emit('stop')">停止</el-button>
-        <el-button
-          type="primary"
-          size="default"
-          :icon="Promotion"
-          :disabled="!canSend"
-          @click="emit('send')"
-        >发送</el-button>
+        <el-button v-if="streaming" type="danger" plain size="default" :icon="CloseBold" @click="emit('stop')"
+          >停止</el-button
+        >
+        <el-button type="primary" size="default" :icon="Promotion" :disabled="!canSend" @click="emit('send')"
+          >发送</el-button
+        >
       </div>
     </div>
   </div>

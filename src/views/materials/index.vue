@@ -19,29 +19,17 @@
         <el-row :gutter="16">
           <el-col :span="6">
             <el-form-item label="物料名称">
-              <el-input
-                v-model="searchForm.materialName"
-                placeholder="请输入物料名称"
-                clearable
-              />
+              <el-input v-model="searchForm.materialName" placeholder="请输入物料名称" clearable />
             </el-form-item>
           </el-col>
           <el-col :span="6">
             <el-form-item label="物料编码">
-              <el-input
-                v-model="searchForm.materialCode"
-                placeholder="请输入物料编码"
-                clearable
-              />
+              <el-input v-model="searchForm.materialCode" placeholder="请输入物料编码" clearable />
             </el-form-item>
           </el-col>
           <el-col :span="6">
             <el-form-item label="物料类型">
-              <el-input
-                v-model="searchForm.materialType"
-                placeholder="请输入物料类型"
-                clearable
-              />
+              <el-input v-model="searchForm.materialType" placeholder="请输入物料类型" clearable />
             </el-form-item>
           </el-col>
           <el-col :span="6" class="search-actions">
@@ -68,13 +56,7 @@
         </el-space>
       </div>
 
-      <el-table
-        v-loading="loading"
-        :data="materialList"
-        border
-        stripe
-        highlight-current-row
-      >
+      <el-table v-loading="loading" :data="materialList" border stripe highlight-current-row>
         <el-table-column prop="materialCode" label="物料编码" width="140" show-overflow-tooltip />
         <el-table-column prop="materialName" label="物料名称" width="160" show-overflow-tooltip />
         <el-table-column prop="materialType" label="物料类型" width="120" show-overflow-tooltip />
@@ -106,17 +88,8 @@
       />
     </el-card>
 
-    <el-dialog
-      v-model="showEditorDialog"
-      :title="editingMaterial ? '编辑物料' : '新增物料'"
-      width="700px"
-    >
-      <el-form
-        ref="materialFormRef"
-        :model="materialForm"
-        :rules="materialRules"
-        label-width="100px"
-      >
+    <el-dialog v-model="showEditorDialog" :title="editingMaterial ? '编辑物料' : '新增物料'" width="700px">
+      <el-form ref="materialFormRef" :model="materialForm" :rules="materialRules" label-width="100px">
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="物料编码" prop="materialCode">
@@ -170,12 +143,7 @@
         </el-row>
 
         <el-form-item label="物料描述" prop="materialDesc">
-          <el-input
-            v-model="materialForm.materialDesc"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入物料描述"
-          />
+          <el-input v-model="materialForm.materialDesc" type="textarea" :rows="3" placeholder="请输入物料描述" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -184,11 +152,7 @@
       </template>
     </el-dialog>
 
-    <el-drawer
-      v-model="showDetailDrawer"
-      title="物料详情"
-      size="520px"
-    >
+    <el-drawer v-model="showDetailDrawer" title="物料详情" size="520px">
       <el-descriptions :column="1" border>
         <el-descriptions-item label="物料编码">{{ currentMaterial.materialCode }}</el-descriptions-item>
         <el-descriptions-item label="物料名称">{{ currentMaterial.materialName }}</el-descriptions-item>
@@ -247,18 +211,10 @@ const materialForm = reactive({
 })
 
 const materialRules = {
-  materialCode: [
-    { required: true, message: '请输入物料编码', trigger: 'blur' }
-  ],
-  materialName: [
-    { required: true, message: '请输入物料名称', trigger: 'blur' }
-  ],
-  materialType: [
-    { required: true, message: '请输入物料类型', trigger: 'blur' }
-  ],
-  unit: [
-    { required: true, message: '请输入计量单位', trigger: 'blur' }
-  ]
+  materialCode: [{ required: true, message: '请输入物料编码', trigger: 'blur' }],
+  materialName: [{ required: true, message: '请输入物料名称', trigger: 'blur' }],
+  materialType: [{ required: true, message: '请输入物料类型', trigger: 'blur' }],
+  unit: [{ required: true, message: '请输入计量单位', trigger: 'blur' }]
 }
 
 const showDetailDrawer = ref(false)
@@ -364,14 +320,19 @@ const afterChange = () => {
   getMaterialList()
 }
 
-const handleDelete = (row) => confirmAction(`确定要删除物料“${row.materialName}”吗？`, async () => {
-  loading.value = true
-  try {
-    await materialApi.deleteMaterial(row.id)
-  } finally {
-    loading.value = false
-  }
-}, { title: '删除确认', successText: '删除成功', onSuccess: afterChange })
+const handleDelete = (row) =>
+  confirmAction(
+    `确定要删除物料“${row.materialName}”吗？`,
+    async () => {
+      loading.value = true
+      try {
+        await materialApi.deleteMaterial(row.id)
+      } finally {
+        loading.value = false
+      }
+    },
+    { title: '删除确认', successText: '删除成功', onSuccess: afterChange }
+  )
 
 const handleSave = async () => {
   // 校验失败时 validate() 会 reject，单独处理，避免落入下方 catch

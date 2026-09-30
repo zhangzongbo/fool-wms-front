@@ -20,29 +20,17 @@
         <el-row :gutter="16">
           <el-col :span="6">
             <el-form-item label="仓库名称">
-              <el-input
-                v-model="searchForm.name"
-                placeholder="请输入仓库名称"
-                clearable
-              />
+              <el-input v-model="searchForm.name" placeholder="请输入仓库名称" clearable />
             </el-form-item>
           </el-col>
           <el-col :span="6">
             <el-form-item label="仓库编码">
-              <el-input
-                v-model="searchForm.code"
-                placeholder="请输入仓库编码"
-                clearable
-              />
+              <el-input v-model="searchForm.code" placeholder="请输入仓库编码" clearable />
             </el-form-item>
           </el-col>
           <el-col :span="6">
             <el-form-item label="状态">
-              <el-select
-                v-model="searchForm.status"
-                placeholder="请选择状态"
-                clearable
-              >
+              <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
                 <el-option v-for="s in ENABLE_STATUS" :key="s.value" :label="s.label" :value="s.value" />
               </el-select>
             </el-form-item>
@@ -71,13 +59,7 @@
           </el-button>
         </el-space>
       </div>
-      <el-table
-        v-loading="loading"
-        :data="warehouseList"
-        border
-        stripe
-        highlight-current-row
-      >
+      <el-table v-loading="loading" :data="warehouseList" border stripe highlight-current-row>
         <el-table-column prop="warehouseCode" label="仓库编码" width="120" />
         <el-table-column prop="warehouseName" label="仓库名称" width="150" show-overflow-tooltip />
         <el-table-column prop="province" label="省份" width="100" show-overflow-tooltip />
@@ -98,8 +80,9 @@
             <el-divider direction="vertical" />
             <el-button type="primary" link @click="handleView(row)">详情</el-button>
             <el-divider direction="vertical" />
-            <el-button v-perm="'sys:warehouse:update'" 
-              :type="row.status === 1 ? 'danger' : 'success'" 
+            <el-button
+              v-perm="'sys:warehouse:update'"
+              :type="row.status === 1 ? 'danger' : 'success'"
               link
               :class="row.status === 1 ? 'danger' : 'success'"
               @click="handleStatusChange(row)"
@@ -129,12 +112,7 @@
       width="800px"
       destroy-on-close
     >
-      <el-form
-        ref="warehouseFormRef"
-        :model="warehouseForm"
-        :rules="warehouseRules"
-        label-width="100px"
-      >
+      <el-form ref="warehouseFormRef" :model="warehouseForm" :rules="warehouseRules" label-width="100px">
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="仓库编码" prop="warehouseCode">
@@ -147,7 +125,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        
+
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="负责人" prop="managerName">
@@ -192,12 +170,7 @@
         </el-row>
 
         <el-form-item label="仓库描述">
-          <el-input 
-            v-model="warehouseForm.warehouseDesc" 
-            type="textarea" 
-            :rows="3"
-            placeholder="请输入仓库描述信息" 
-          />
+          <el-input v-model="warehouseForm.warehouseDesc" type="textarea" :rows="3" placeholder="请输入仓库描述信息" />
         </el-form-item>
 
         <el-form-item label="状态" prop="status">
@@ -224,7 +197,9 @@
         <el-descriptions-item label="经度">{{ currentWarehouse.longitude }}</el-descriptions-item>
         <el-descriptions-item label="纬度">{{ currentWarehouse.latitude }}</el-descriptions-item>
         <el-descriptions-item label="仓库地址" :span="2">{{ currentWarehouse.warehouseAddress }}</el-descriptions-item>
-        <el-descriptions-item label="仓库描述" :span="2">{{ currentWarehouse.warehouseDesc || '暂无描述' }}</el-descriptions-item>
+        <el-descriptions-item label="仓库描述" :span="2">{{
+          currentWarehouse.warehouseDesc || '暂无描述'
+        }}</el-descriptions-item>
         <el-descriptions-item label="状态">
           <el-tag :type="statusOf(currentWarehouse.status).type">
             {{ statusOf(currentWarehouse.status).label }}
@@ -291,33 +266,25 @@ const warehouseForm = reactive({
 
 // 表单验证规则
 const warehouseRules = {
-  warehouseCode: [
-    { required: true, message: '请输入仓库编码', trigger: 'blur' }
-  ],
-  warehouseName: [
-    { required: true, message: '请输入仓库名称', trigger: 'blur' }
-  ],
-  warehouseAddress: [
-    { required: true, message: '请输入仓库地址', trigger: 'blur' }
-  ],
-  managerName: [
-    { required: true, message: '请输入负责人姓名', trigger: 'blur' }
-  ],
+  warehouseCode: [{ required: true, message: '请输入仓库编码', trigger: 'blur' }],
+  warehouseName: [{ required: true, message: '请输入仓库名称', trigger: 'blur' }],
+  warehouseAddress: [{ required: true, message: '请输入仓库地址', trigger: 'blur' }],
+  managerName: [{ required: true, message: '请输入负责人姓名', trigger: 'blur' }],
   managerPhone: [
     { required: true, message: '请输入联系电话', trigger: 'blur' },
     { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
   ],
-  province: [
-    { required: true, message: '请选择省份', trigger: 'change' }
-  ],
-  city: [
-    { required: true, message: '请选择城市', trigger: 'change' }
-  ],
+  province: [{ required: true, message: '请选择省份', trigger: 'change' }],
+  city: [{ required: true, message: '请选择城市', trigger: 'change' }],
   longitude: [
     { pattern: /^-?((0|1?[0-7]?[0-9]|180)(\.\d{1,6})?)?$/, message: '请输入正确的经度(-180到180)', trigger: 'blur' }
   ],
   latitude: [
-    { pattern: /^-?((0|[1-8]?[0-9])(\.\d{1,6})?|90(\.0{1,6})?)$/, message: '请输入正确的纬度(-90到90)', trigger: 'blur' }
+    {
+      pattern: /^-?((0|[1-8]?[0-9])(\.\d{1,6})?|90(\.0{1,6})?)$/,
+      message: '请输入正确的纬度(-90到90)',
+      trigger: 'blur'
+    }
   ]
 }
 
@@ -335,16 +302,16 @@ const getWarehouseList = async () => {
       warehouseCode: searchForm.code || undefined,
       status: searchForm.status !== '' ? searchForm.status : undefined
     }
-    
+
     // 过滤掉 undefined 的参数
-    Object.keys(params).forEach(key => {
+    Object.keys(params).forEach((key) => {
       if (params[key] === undefined) {
         delete params[key]
       }
     })
-    
+
     const result = await warehouseApi.getWarehouseList(params)
-    
+
     if (result) {
       warehouseList.value = result.records || result.data || result
       pagination.total = result.total || result.length || 0
@@ -367,7 +334,7 @@ const handleSearch = () => {
 
 // 重置搜索
 const handleReset = () => {
-  Object.keys(searchForm).forEach(key => {
+  Object.keys(searchForm).forEach((key) => {
     searchForm[key] = ''
   })
   pagination.currentPage = 1
@@ -382,7 +349,7 @@ const openCreate = () => {
 
 const handleEdit = (row) => {
   editingWarehouse.value = row
-  Object.keys(warehouseForm).forEach(key => {
+  Object.keys(warehouseForm).forEach((key) => {
     warehouseForm[key] = row[key]
   })
   showAddDialog.value = true
@@ -417,14 +384,18 @@ const afterChange = () => {
 // 状态变更：启用中则禁用，否则启用
 const handleStatusChange = (row) => {
   const action = toggleLabel(row.status)
-  return confirmAction(`确定要${action}仓库"${row.warehouseName}"吗？`, async () => {
-    loading.value = true
-    try {
-      await (row.status === 1 ? warehouseApi.disableWarehouse(row.id) : warehouseApi.enableWarehouse(row.id))
-    } finally {
-      loading.value = false
-    }
-  }, { title: '确认操作', successText: `${action}成功`, onSuccess: afterChange })
+  return confirmAction(
+    `确定要${action}仓库"${row.warehouseName}"吗？`,
+    async () => {
+      loading.value = true
+      try {
+        await (row.status === 1 ? warehouseApi.disableWarehouse(row.id) : warehouseApi.enableWarehouse(row.id))
+      } finally {
+        loading.value = false
+      }
+    },
+    { title: '确认操作', successText: `${action}成功`, onSuccess: afterChange }
+  )
 }
 
 // 保存
@@ -433,7 +404,7 @@ const handleSave = async () => {
   if (!(await warehouseFormRef.value.validate().catch(() => false))) return
   try {
     loading.value = true
-    
+
     if (editingWarehouse.value) {
       // 编辑模式
       await warehouseApi.updateWarehouse(editingWarehouse.value.id, warehouseForm)
@@ -443,7 +414,7 @@ const handleSave = async () => {
       await warehouseApi.createWarehouse(warehouseForm)
       ElMessage.success('新增成功')
     }
-    
+
     showAddDialog.value = false
     resetForm()
     afterChange()
@@ -456,7 +427,7 @@ const handleSave = async () => {
 
 // 重置表单
 const resetForm = () => {
-  Object.keys(warehouseForm).forEach(key => {
+  Object.keys(warehouseForm).forEach((key) => {
     if (key === 'status') {
       warehouseForm[key] = 1
     } else {

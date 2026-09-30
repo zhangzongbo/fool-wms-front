@@ -25,7 +25,8 @@ onMounted(() => {
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   font-family: var(--brand-font, 'Inter', 'Segoe UI', 'PingFang SC', sans-serif);
   background-color: var(--brand-bg);

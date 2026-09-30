@@ -6,7 +6,7 @@
  */
 const PROVINCES = [
   '北京市',
-  '上海市', 
+  '上海市',
   '天津市',
   '重庆市',
   '河北省',
@@ -44,7 +44,7 @@ const PROVINCES = [
 /**
  * 省份选项数据 - 用于 el-select
  */
-export const PROVINCE_OPTIONS = PROVINCES.map(province => ({
+export const PROVINCE_OPTIONS = PROVINCES.map((province) => ({
   label: province,
   value: province
 }))

@@ -5,16 +5,16 @@ import { ref } from 'vue'
 export const useAppStore = defineStore('app', () => {
   // 侧边栏状态
   const sidebarCollapsed = ref(false)
-  
+
   // 主题设置
   const theme = ref('light')
-  
+
   // 语言设置
   const language = ref('zh-CN')
-  
+
   // 面包屑导航
   const breadcrumbs = ref([])
-  
+
   // 页面加载状态
   const pageLoading = ref(false)
 
@@ -64,12 +64,12 @@ export const useAppStore = defineStore('app', () => {
     if (savedTheme) {
       theme.value = savedTheme
     }
-    
+
     const savedLanguage = localStorage.getItem('language')
     if (savedLanguage) {
       language.value = savedLanguage
     }
-    
+
     const savedSidebarState = localStorage.getItem('sidebarCollapsed')
     if (savedSidebarState !== null) {
       sidebarCollapsed.value = JSON.parse(savedSidebarState)

@@ -12,12 +12,21 @@ export function useLocalPage(list, search) {
   const pagedList = computed(() => list.value.slice((page.current - 1) * page.size, page.current * page.size))
 
   if (search) {
-    watch(search, () => { page.current = 1 }, { deep: true })
+    watch(
+      search,
+      () => {
+        page.current = 1
+      },
+      { deep: true }
+    )
   }
-  watch(() => list.value.length, (len) => {
-    const maxPage = Math.max(1, Math.ceil(len / page.size))
-    if (page.current > maxPage) page.current = maxPage
-  })
+  watch(
+    () => list.value.length,
+    (len) => {
+      const maxPage = Math.max(1, Math.ceil(len / page.size))
+      if (page.current > maxPage) page.current = maxPage
+    }
+  )
 
   return { page, pagedList }
 }

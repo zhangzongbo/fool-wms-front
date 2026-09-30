@@ -23,7 +23,11 @@
         </div>
       </div>
 
-      <div v-if="!(msg.streaming && msg.events && msg.events.length && !msg.content && !msg.error)" class="msg-bubble" :class="msg.role">
+      <div
+        v-if="!(msg.streaming && msg.events && msg.events.length && !msg.content && !msg.error)"
+        class="msg-bubble"
+        :class="msg.role"
+      >
         <template v-if="msg.content">
           <ChatMarkdown v-if="msg.role === 'assistant'" :content="msg.content" :streaming="msg.streaming" />
           <template v-else>{{ msg.content }}</template>
@@ -213,10 +217,18 @@ const emit = defineEmits(['toggle-thought'])
   font-weight: 600;
   line-height: 1.4;
 }
-.markdown-body :deep(h1) { font-size: 20px; }
-.markdown-body :deep(h2) { font-size: 18px; }
-.markdown-body :deep(h3) { font-size: 16px; }
-.markdown-body :deep(h4) { font-size: 14px; }
+.markdown-body :deep(h1) {
+  font-size: 20px;
+}
+.markdown-body :deep(h2) {
+  font-size: 18px;
+}
+.markdown-body :deep(h3) {
+  font-size: 16px;
+}
+.markdown-body :deep(h4) {
+  font-size: 14px;
+}
 .markdown-body :deep(ul),
 .markdown-body :deep(ol) {
   margin: 6px 0 10px;
@@ -340,20 +352,41 @@ const emit = defineEmits(['toggle-thought'])
   background: #c0c4cc;
   animation: bounce 1.2s infinite ease-in-out;
 }
-.typing i:nth-child(2) { animation-delay: 0.15s; }
-.typing i:nth-child(3) { animation-delay: 0.3s; }
+.typing i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.typing i:nth-child(3) {
+  animation-delay: 0.3s;
+}
 
 /* scoped 下 keyframes 名会加 scope 后缀，需与使用它的规则放在同一组件 */
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 @keyframes bounce {
-  0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
-  40% { transform: translateY(-5px); opacity: 1; }
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: translateY(-5px);
+    opacity: 1;
+  }
 }
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

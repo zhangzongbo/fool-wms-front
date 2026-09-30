@@ -6,7 +6,9 @@
         <p class="page-subtitle">定义角色并授予权限点，用户通过角色获得访问能力</p>
       </div>
       <div class="header-actions">
-        <el-button v-perm="'sys:role:add'" type="primary" @click="openCreate"><el-icon><Plus /></el-icon> 新增角色</el-button>
+        <el-button v-perm="'sys:role:add'" type="primary" @click="openCreate"
+          ><el-icon><Plus /></el-icon> 新增角色</el-button
+        >
       </div>
     </div>
 
@@ -26,14 +28,21 @@
       </el-table>
     </el-card>
 
-    <el-dialog v-model="dialog.visible" :title="dialog.isEdit ? '编辑角色' : '新增角色'" width="480px" @close="resetForm">
+    <el-dialog
+      v-model="dialog.visible"
+      :title="dialog.isEdit ? '编辑角色' : '新增角色'"
+      width="480px"
+      @close="resetForm"
+    >
       <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
-        <el-form-item label="角色编码" prop="roleCode"><el-input v-model="form.roleCode" :disabled="dialog.isEdit" placeholder="如：WAREHOUSE_ADMIN" /></el-form-item>
+        <el-form-item label="角色编码" prop="roleCode"
+          ><el-input v-model="form.roleCode" :disabled="dialog.isEdit" placeholder="如：WAREHOUSE_ADMIN"
+        /></el-form-item>
         <el-form-item label="角色名称" prop="roleName"><el-input v-model="form.roleName" /></el-form-item>
         <el-form-item label="描述"><el-input v-model="form.remark" type="textarea" :rows="2" /></el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialog.visible=false">取消</el-button>
+        <el-button @click="dialog.visible = false">取消</el-button>
         <el-button type="primary" :loading="submitting" @click="handleSubmit">保存</el-button>
       </template>
     </el-dialog>
@@ -52,8 +61,10 @@
         />
       </el-scrollbar>
       <template #footer>
-        <el-button @click="permDialog.visible=false">取消</el-button>
-        <el-button type="primary" :loading="permDialog.submitting" :disabled="permDialog.loading" @click="submitPerms">保存</el-button>
+        <el-button @click="permDialog.visible = false">取消</el-button>
+        <el-button type="primary" :loading="permDialog.submitting" :disabled="permDialog.loading" @click="submitPerms"
+          >保存</el-button
+        >
       </template>
     </el-dialog>
   </div>
@@ -94,10 +105,11 @@ const rules = {
   roleCode: [{ required: true, message: '请输入角色编码', trigger: 'blur' }],
   roleName: [{ required: true, message: '请输入角色名称', trigger: 'blur' }]
 }
-const handleDelete = (row) => confirmAction(`确定删除角色「${row.roleName}」吗？`, () => roleApi.delete(row.id), {
-  successText: '删除成功',
-  onSuccess: loadData
-})
+const handleDelete = (row) =>
+  confirmAction(`确定删除角色「${row.roleName}」吗？`, () => roleApi.delete(row.id), {
+    successText: '删除成功',
+    onSuccess: loadData
+  })
 
 // 权限树
 const labelOf = (data) => `${data.permName || data.permCode}`
@@ -116,7 +128,9 @@ const permTree = computed(() => {
 const treeRef = ref()
 const permDialog = reactive({ visible: false, submitting: false, loading: false, role: null })
 // 保存时会带上半选父节点，回显只能设叶子节点：父节点 id 传给 setCheckedKeys 会把其下全部子节点连带勾上
-const leafIds = computed(() => new Set(permissions.value.filter((p) => !permissions.value.some((c) => c.parentId === p.id)).map((p) => p.id)))
+const leafIds = computed(
+  () => new Set(permissions.value.filter((p) => !permissions.value.some((c) => c.parentId === p.id)).map((p) => p.id))
+)
 const openPerms = async (row) => {
   permDialog.role = row
   permDialog.visible = true
@@ -130,7 +144,10 @@ const openPerms = async (row) => {
     permDialog.loading = false
   } catch (e) {
     // 回显失败时关闭弹窗，避免以空集覆盖已有权限
-    if (permDialog.role === row) { permDialog.visible = false; permDialog.loading = false }
+    if (permDialog.role === row) {
+      permDialog.visible = false
+      permDialog.loading = false
+    }
   }
 }
 const submitPerms = async () => {
@@ -138,13 +155,20 @@ const submitPerms = async () => {
   try {
     const ids = [...treeRef.value.getCheckedKeys(), ...treeRef.value.getHalfCheckedKeys()]
     await roleApi.assignPermissions(permDialog.role.id, ids)
-    ElMessage.success('权限已保存'); permDialog.visible = false
-  } finally { permDialog.submitting = false }
+    ElMessage.success('权限已保存')
+    permDialog.visible = false
+  } finally {
+    permDialog.submitting = false
+  }
 }
 
 onMounted(loadData)
 </script>
 
 <style scoped>
-.dialog-sub { color: var(--brand-text-secondary); font-size: 13px; margin-bottom: 12px; }
+.dialog-sub {
+  color: var(--brand-text-secondary);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
 </style>

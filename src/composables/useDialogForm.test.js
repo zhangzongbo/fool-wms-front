@@ -65,7 +65,9 @@ describe('useDialogForm', () => {
   })
 
   it('接口失败时不抛出异常，弹窗保持打开，submitting 复位', async () => {
-    const { openCreate, handleSubmit, dialog, submitting, onSuccess } = setup({ create: () => Promise.reject(new Error('500')) })
+    const { openCreate, handleSubmit, dialog, submitting, onSuccess } = setup({
+      create: () => Promise.reject(new Error('500'))
+    })
     openCreate()
     await expect(handleSubmit()).resolves.toBeUndefined()
     expect(dialog.visible).toBe(true)

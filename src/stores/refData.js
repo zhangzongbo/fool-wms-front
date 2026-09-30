@@ -22,21 +22,34 @@ export const useRefDataStore = defineStore('refData', () => {
   const pending = {}
 
   /** 加载指定参考数据，已加载过的直接复用；单项失败不影响其他项 */
-  const ensure = (keys, { force = false } = {}) => Promise.allSettled(keys.map((key) => {
-    if (force || !pending[key]) {
-      pending[key] = LOADERS[key]()
-        .then((list) => { data[key] = list || [] })
-        .catch((e) => { delete pending[key]; throw e })
-    }
-    return pending[key]
-  }))
+  const ensure = (keys, { force = false } = {}) =>
+    Promise.allSettled(
+      keys.map((key) => {
+        if (force || !pending[key]) {
+          pending[key] = LOADERS[key]()
+            .then((list) => {
+              data[key] = list || []
+            })
+            .catch((e) => {
+              delete pending[key]
+              throw e
+            })
+        }
+        return pending[key]
+      })
+    )
 
   /** 标记数据已变更，下次 ensure 时重新拉取 */
-  const invalidate = (...keys) => keys.forEach((key) => { delete pending[key] })
+  const invalidate = (...keys) =>
+    keys.forEach((key) => {
+      delete pending[key]
+    })
 
   const reset = () => {
     invalidate(...Object.keys(LOADERS))
-    Object.keys(data).forEach((key) => { data[key] = [] })
+    Object.keys(data).forEach((key) => {
+      data[key] = []
+    })
   }
 
   const ownerMap = computed(() => toMap(data.owners, 'ownerName'))

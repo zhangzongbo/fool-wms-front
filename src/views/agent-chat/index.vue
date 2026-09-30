@@ -39,12 +39,7 @@
           <div class="empty-icon">💬</div>
           <div class="empty-title">开始和智能助手对话</div>
           <div class="empty-tips">
-            <span
-              v-for="tip in quickTips"
-              :key="tip"
-              class="tip-chip"
-              @click="applyTip(tip)"
-            >{{ tip }}</span>
+            <span v-for="tip in quickTips" :key="tip" class="tip-chip" @click="applyTip(tip)">{{ tip }}</span>
           </div>
         </div>
 
@@ -59,13 +54,7 @@
     </div>
 
     <!-- 输入区 -->
-    <ChatInput
-      v-model="input"
-      :session-id="sessionId"
-      :streaming="isStreaming"
-      @send="send"
-      @stop="stopStreaming"
-    />
+    <ChatInput v-model="input" :session-id="sessionId" :streaming="isStreaming" @send="send" @stop="stopStreaming" />
   </div>
 </template>
 
@@ -98,7 +87,14 @@ const scrollToBottom = () => {
   })
 }
 
-const { sessionId, connState, isStreaming, sendPrompt, stopStreaming, resetSession: newSession } = useAgentSocket({
+const {
+  sessionId,
+  connState,
+  isStreaming,
+  sendPrompt,
+  stopStreaming,
+  resetSession: newSession
+} = useAgentSocket({
   messages,
   userId,
   returnThought,
@@ -106,18 +102,24 @@ const { sessionId, connState, isStreaming, sendPrompt, stopStreaming, resetSessi
   onUpdate: scrollToBottom
 })
 
-const statusClass = computed(() => ({
-  idle: 'is-idle',
-  connecting: 'is-busy',
-  streaming: 'is-busy',
-  error: 'is-error'
-}[connState.value]))
-const statusText = computed(() => ({
-  idle: '在线',
-  connecting: '连接中…',
-  streaming: '回复中…',
-  error: '连接异常'
-}[connState.value]))
+const statusClass = computed(
+  () =>
+    ({
+      idle: 'is-idle',
+      connecting: 'is-busy',
+      streaming: 'is-busy',
+      error: 'is-error'
+    })[connState.value]
+)
+const statusText = computed(
+  () =>
+    ({
+      idle: '在线',
+      connecting: '连接中…',
+      streaming: '回复中…',
+      error: '连接异常'
+    })[connState.value]
+)
 
 const quickTips = ['你能读真实代码吗', '介绍一下这个系统', '帮我查询库存', '入库流程是怎样的']
 
@@ -260,7 +262,12 @@ const send = () => {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 </style>

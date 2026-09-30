@@ -18,30 +18,100 @@ const routes = [
     component: Layout,
     redirect: '/dashboard',
     children: [
-      { path: 'dashboard', name: 'Dashboard', component: () => import('@/views/dashboard/index.vue'), meta: { title: '仪表盘', icon: Odometer } },
+      {
+        path: 'dashboard',
+        name: 'Dashboard',
+        component: () => import('@/views/dashboard/index.vue'),
+        meta: { title: '仪表盘', icon: Odometer }
+      },
 
       // 智能助手
-      { path: 'agent-chat', name: 'AgentChat', component: () => import('@/views/agent-chat/index.vue'), meta: { title: '智能助手', icon: ChatDotRound } },
+      {
+        path: 'agent-chat',
+        name: 'AgentChat',
+        component: () => import('@/views/agent-chat/index.vue'),
+        meta: { title: '智能助手', icon: ChatDotRound }
+      },
 
       // 基础数据
-      { path: 'owner', name: 'Owner', component: () => import('@/views/owner/index.vue'), meta: { title: '货主管理', group: '基础数据', perm: 'sys:owner:list' } },
-      { path: 'warehouse', name: 'Warehouse', component: () => import('@/views/warehouse/index.vue'), meta: { title: '仓库管理', group: '基础数据' } },
-      { path: 'warehouse-area', name: 'WarehouseArea', component: () => import('@/views/warehouse-area/index.vue'), meta: { title: '库区管理', group: '基础数据' } },
-      { path: 'location', name: 'Location', component: () => import('@/views/location/index.vue'), meta: { title: '库位管理', group: '基础数据' } },
-      { path: 'materials', name: 'Materials', component: () => import('@/views/materials/index.vue'), meta: { title: '物料管理', group: '基础数据' } },
+      {
+        path: 'owner',
+        name: 'Owner',
+        component: () => import('@/views/owner/index.vue'),
+        meta: { title: '货主管理', group: '基础数据', perm: 'sys:owner:list' }
+      },
+      {
+        path: 'warehouse',
+        name: 'Warehouse',
+        component: () => import('@/views/warehouse/index.vue'),
+        meta: { title: '仓库管理', group: '基础数据' }
+      },
+      {
+        path: 'warehouse-area',
+        name: 'WarehouseArea',
+        component: () => import('@/views/warehouse-area/index.vue'),
+        meta: { title: '库区管理', group: '基础数据' }
+      },
+      {
+        path: 'location',
+        name: 'Location',
+        component: () => import('@/views/location/index.vue'),
+        meta: { title: '库位管理', group: '基础数据' }
+      },
+      {
+        path: 'materials',
+        name: 'Materials',
+        component: () => import('@/views/materials/index.vue'),
+        meta: { title: '物料管理', group: '基础数据' }
+      },
 
       // 库存
-      { path: 'inventory', name: 'Inventory', component: () => import('@/views/inventory/index.vue'), meta: { title: '库存查询', icon: Box, perm: 'sys:inventory:list' } },
+      {
+        path: 'inventory',
+        name: 'Inventory',
+        component: () => import('@/views/inventory/index.vue'),
+        meta: { title: '库存查询', icon: Box, perm: 'sys:inventory:list' }
+      },
 
       // 作业
-      { path: 'inbound', name: 'Inbound', component: () => import('@/views/inbound/index.vue'), meta: { title: '入库管理', group: '仓储作业', perm: 'sys:inbound:list' } },
-      { path: 'outbound', name: 'Outbound', component: () => import('@/views/outbound/index.vue'), meta: { title: '出库管理', group: '仓储作业', perm: 'sys:outbound:list' } },
-      { path: 'check', name: 'Check', component: () => import('@/views/check/index.vue'), meta: { title: '盘点管理', group: '仓储作业', perm: 'sys:check:list' } },
+      {
+        path: 'inbound',
+        name: 'Inbound',
+        component: () => import('@/views/inbound/index.vue'),
+        meta: { title: '入库管理', group: '仓储作业', perm: 'sys:inbound:list' }
+      },
+      {
+        path: 'outbound',
+        name: 'Outbound',
+        component: () => import('@/views/outbound/index.vue'),
+        meta: { title: '出库管理', group: '仓储作业', perm: 'sys:outbound:list' }
+      },
+      {
+        path: 'check',
+        name: 'Check',
+        component: () => import('@/views/check/index.vue'),
+        meta: { title: '盘点管理', group: '仓储作业', perm: 'sys:check:list' }
+      },
 
       // 系统
-      { path: 'system/user', name: 'SysUser', component: () => import('@/views/system/user/index.vue'), meta: { title: '用户管理', group: '系统管理', perm: 'sys:user:list' } },
-      { path: 'system/role', name: 'SysRole', component: () => import('@/views/system/role/index.vue'), meta: { title: '角色管理', group: '系统管理', perm: 'sys:role:list' } },
-      { path: 'system/permission', name: 'SysPermission', component: () => import('@/views/system/permission/index.vue'), meta: { title: '权限管理', group: '系统管理', perm: 'sys:perm:list' } }
+      {
+        path: 'system/user',
+        name: 'SysUser',
+        component: () => import('@/views/system/user/index.vue'),
+        meta: { title: '用户管理', group: '系统管理', perm: 'sys:user:list' }
+      },
+      {
+        path: 'system/role',
+        name: 'SysRole',
+        component: () => import('@/views/system/role/index.vue'),
+        meta: { title: '角色管理', group: '系统管理', perm: 'sys:role:list' }
+      },
+      {
+        path: 'system/permission',
+        name: 'SysPermission',
+        component: () => import('@/views/system/permission/index.vue'),
+        meta: { title: '权限管理', group: '系统管理', perm: 'sys:perm:list' }
+      }
     ]
   },
   { path: '/:pathMatch(.*)*', redirect: '/dashboard' }

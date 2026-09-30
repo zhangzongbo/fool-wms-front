@@ -15,7 +15,9 @@ const loadMermaid = () => {
       return mermaid
     })
     // 加载失败（如网络中断）时允许下次重试
-    mermaidPromise.catch(() => { mermaidPromise = null })
+    mermaidPromise.catch(() => {
+      mermaidPromise = null
+    })
   }
   return mermaidPromise
 }
@@ -28,8 +30,7 @@ const md = new MarkdownIt({
 
 // mermaid 代码块先渲染为占位元素，源码经 URI 编码存入 data 属性，待 renderMermaidBlocks 转成 SVG
 const defaultFence =
-  md.renderer.rules.fence ||
-  ((tokens, idx, options, env, self) => self.renderToken(tokens, idx, options))
+  md.renderer.rules.fence || ((tokens, idx, options, env, self) => self.renderToken(tokens, idx, options))
 md.renderer.rules.fence = (tokens, idx, options, env, self) => {
   const token = tokens[idx]
   // 只取语言标记的第一个词并忽略大小写，兼容 ```Mermaid、```mermaid {…} 等写法
@@ -43,8 +44,7 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
 
 // 链接统一新开页并加 noopener，避免安全隐患
 const defaultLinkOpen =
-  md.renderer.rules.link_open ||
-  ((tokens, idx, options, env, self) => self.renderToken(tokens, idx, options))
+  md.renderer.rules.link_open || ((tokens, idx, options, env, self) => self.renderToken(tokens, idx, options))
 md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
   const token = tokens[idx]
   token.attrSet('target', '_blank')

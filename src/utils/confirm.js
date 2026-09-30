@@ -12,7 +12,11 @@ import { ElMessage, ElMessageBox } from 'element-plus'
  * @param {() => void} [options.onSuccess] 成功后回调（通常为刷新列表）
  * @returns {Promise<boolean>} 是否执行成功
  */
-export async function confirmAction(message, action, { title = '提示', confirmButtonText, successText, onSuccess } = {}) {
+export async function confirmAction(
+  message,
+  action,
+  { title = '提示', confirmButtonText, successText, onSuccess } = {}
+) {
   try {
     await ElMessageBox.confirm(message, title, { type: 'warning', ...(confirmButtonText ? { confirmButtonText } : {}) })
   } catch (e) {

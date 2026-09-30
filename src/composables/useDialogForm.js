@@ -11,7 +11,14 @@ import { ElMessage } from 'element-plus'
  * @param {string} [options.createText] 新增成功提示
  * @param {string} [options.updateText] 编辑成功提示
  */
-export function useDialogForm({ defaultForm, create, update, onSuccess, createText = '新增成功', updateText = '更新成功' }) {
+export function useDialogForm({
+  defaultForm,
+  create,
+  update,
+  onSuccess,
+  createText = '新增成功',
+  updateText = '更新成功'
+}) {
   const dialog = reactive({ visible: false, isEdit: false })
   const formRef = ref()
   const form = reactive(defaultForm())

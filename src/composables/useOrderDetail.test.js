@@ -3,7 +3,9 @@ import { useOrderDetail } from './useOrderDetail'
 
 const deferred = () => {
   let resolve
-  const promise = new Promise((r) => { resolve = r })
+  const promise = new Promise((r) => {
+    resolve = r
+  })
   return { promise, resolve }
 }
 

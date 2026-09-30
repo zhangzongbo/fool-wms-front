@@ -21,9 +21,17 @@ describe('confirmAction', () => {
     ElMessageBox.confirm.mockResolvedValue('confirm')
     const action = vi.fn(() => Promise.resolve())
     const onSuccess = vi.fn()
-    const ok = await confirmAction('确定删除？', action, { title: '删除确认', confirmButtonText: '删除', successText: '删除成功', onSuccess })
+    const ok = await confirmAction('确定删除？', action, {
+      title: '删除确认',
+      confirmButtonText: '删除',
+      successText: '删除成功',
+      onSuccess
+    })
     expect(ok).toBe(true)
-    expect(ElMessageBox.confirm).toHaveBeenCalledWith('确定删除？', '删除确认', { type: 'warning', confirmButtonText: '删除' })
+    expect(ElMessageBox.confirm).toHaveBeenCalledWith('确定删除？', '删除确认', {
+      type: 'warning',
+      confirmButtonText: '删除'
+    })
     expect(ElMessage.success).toHaveBeenCalledWith('删除成功')
     expect(onSuccess).toHaveBeenCalledOnce()
   })
@@ -31,7 +39,9 @@ describe('confirmAction', () => {
   it('操作失败时返回 false，不提示成功、不回调', async () => {
     ElMessageBox.confirm.mockResolvedValue('confirm')
     const onSuccess = vi.fn()
-    expect(await confirmAction('确定？', () => Promise.reject(new Error('500')), { successText: 'ok', onSuccess })).toBe(false)
+    expect(
+      await confirmAction('确定？', () => Promise.reject(new Error('500')), { successText: 'ok', onSuccess })
+    ).toBe(false)
     expect(ElMessage.success).not.toHaveBeenCalled()
     expect(onSuccess).not.toHaveBeenCalled()
   })

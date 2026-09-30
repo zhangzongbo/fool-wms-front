@@ -1,5 +1,5 @@
 <template>
-  <el-select 
+  <el-select
     :model-value="modelValue"
     :placeholder="placeholder"
     :filterable="filterable"
@@ -8,12 +8,7 @@
     :size="size"
     @update:model-value="handleChange"
   >
-    <el-option 
-      v-for="option in PROVINCE_OPTIONS" 
-      :key="option.value"
-      :label="option.label" 
-      :value="option.value" 
-    />
+    <el-option v-for="option in PROVINCE_OPTIONS" :key="option.value" :label="option.label" :value="option.value" />
   </el-select>
 </template>
 
