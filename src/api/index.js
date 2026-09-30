@@ -64,16 +64,10 @@ export const materialApi = {
 }
 
 // ============ 库存管理 ============
+// 库存只读：变动只能由入库完成 / 出库分配·发货 / 盘点过账驱动，后端不提供直接写接口
 export const inventoryApi = {
   list: () => request({ url: '/inventory/list', method: 'get' }),
-  getById: (id) => request({ url: `/inventory/${id}`, method: 'get' }),
-  add: (data) => request({ url: '/inventory/add', method: 'post', data }),
-  update: (id, data) => request({ url: `/inventory/${id}`, method: 'put', data }),
-  delete: (id) => request({ url: `/inventory/${id}`, method: 'delete' }),
-  increase: (data) => request({ url: '/inventory/increase', method: 'post', data }),
-  decrease: (data) => request({ url: '/inventory/decrease', method: 'post', data }),
-  freeze: (data) => request({ url: '/inventory/freeze', method: 'post', data }),
-  releaseFrozen: (data) => request({ url: '/inventory/releaseFrozen', method: 'post', data })
+  getById: (id) => request({ url: `/inventory/${id}`, method: 'get' })
 }
 
 // ============ 入库单 ============
