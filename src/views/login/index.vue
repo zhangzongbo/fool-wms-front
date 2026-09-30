@@ -5,7 +5,7 @@
       <div class="brand-inner">
         <div class="brand-logo">
           <div class="brand-mark">W</div>
-          <span>Fool WMS</span>
+          <span>{{ systemName }}</span>
         </div>
         <h1 class="brand-title">仓储管理平台</h1>
         <p class="brand-desc">3PL 多货主 · 全流程作业闭环 · 数据隔离与权限治理</p>
@@ -53,7 +53,7 @@
           默认管理员账号 <b>admin</b> / <b>admin123</b>
         </div>
       </div>
-      <div class="login-copyright">© {{ year }} Fool WMS · Warehouse Management System</div>
+      <div class="login-copyright">© {{ year }} {{ systemName }} · Warehouse Management System</div>
     </div>
   </div>
 </template>
@@ -72,6 +72,7 @@ const userStore = useUserStore()
 const formRef = ref()
 const loading = ref(false)
 const year = new Date().getFullYear()
+const systemName = import.meta.env.VITE_APP_TITLE || 'Fool WMS'
 
 // 默认账号仅在本地开发环境预填与提示，生产构建不暴露
 const isDev = import.meta.env.DEV

@@ -44,7 +44,7 @@
       <div v-if="!isCollapse" class="sidebar-footer">
         <div class="footer-title">当前环境</div>
         <div class="footer-text">{{ environmentLabel }}</div>
-        <div class="footer-sub">Fool WMS · v1.0</div>
+        <div class="footer-sub">{{ systemName }} · v1.0</div>
       </div>
     </el-aside>
 
@@ -124,7 +124,7 @@ const avatarText = computed(() => displayName.value.charAt(0).toUpperCase())
 const appStore = useAppStore()
 // 折叠状态持久化到 localStorage（App.vue 启动时由 initAppSettings 恢复）
 const isCollapse = computed(() => appStore.sidebarCollapsed)
-const systemName = 'Fool WMS'
+const systemName = import.meta.env.VITE_APP_TITLE || 'Fool WMS'
 
 // 菜单由路由表生成（Layout 子路由，按声明顺序），无权限的项隐藏，分组内无可见项时整组隐藏
 const menus = computed(() => {

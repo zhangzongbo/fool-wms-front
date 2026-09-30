@@ -122,7 +122,7 @@ const router = createRouter({
   routes
 })
 
-const BASE_TITLE = import.meta.env.VITE_APP_TITLE || 'Fool WMS 仓储管理平台'
+const BASE_TITLE = import.meta.env.VITE_APP_TITLE || 'Fool WMS'
 
 // meta.perm：访问页面所需的权限码（与后端列表接口的 @SaCheckPermission 一致；仓库/库区/库位/物料后端列表未设权限，前端也不限制）
 router.beforeEach(async (to) => {
