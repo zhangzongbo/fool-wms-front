@@ -55,9 +55,12 @@ export const useRefDataStore = defineStore('refData', () => {
   const ownerMap = computed(() => toMap(data.owners, 'ownerName'))
   const warehouseMap = computed(() => toMap(data.warehouses, 'warehouseName'))
   const areaMap = computed(() => toMap(data.areas, 'areaName'))
+  const locationMap = computed(() => toMap(data.locations, 'locationCode'))
   const ownerName = (id) => ownerMap.value[id] || '-'
   const warehouseName = (id) => warehouseMap.value[id] || '-'
   const areaName = (id) => areaMap.value[id] || '-'
+  // 库位不在缓存中（如已删除）时显示 #id，便于排查
+  const locationCode = (id) => (id == null ? '-' : locationMap.value[id] || `#${id}`)
 
-  return { ...toRefs(data), ensure, invalidate, reset, ownerName, warehouseName, areaName }
+  return { ...toRefs(data), ensure, invalidate, reset, ownerName, warehouseName, areaName, locationCode }
 })

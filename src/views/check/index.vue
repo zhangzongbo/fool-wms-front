@@ -91,21 +91,30 @@
 
     <el-card class="table-card">
       <el-table v-loading="loading" :data="pagedList" stripe border>
-        <el-table-column type="index" label="#" width="55" align="center" />
-        <el-table-column prop="checkCode" label="盘点单号" min-width="160" show-overflow-tooltip />
-        <el-table-column label="仓库" min-width="150"
-          ><template #default="{ row }">{{ warehouseName(row.warehouseId) }}</template></el-table-column
-        >
-        <el-table-column label="盘点类型" width="110" align="center"
-          ><template #default="{ row }">{{ optionLabel(CHECK_TYPE, row.checkType) }}</template></el-table-column
-        >
-        <el-table-column label="状态" width="100" align="center">
+        <el-table-column type="index" label="#" width="55" align="center" fixed="left" />
+        <el-table-column prop="checkCode" label="盘点单号" min-width="160" fixed="left" show-overflow-tooltip />
+        <el-table-column label="状态" width="100" align="center" fixed="left">
           <template #default="{ row }"
             ><el-tag :type="dictType(CHECK_STATUS, row.status)">{{
               dictLabel(CHECK_STATUS, row.status)
             }}</el-tag></template
           >
         </el-table-column>
+        <el-table-column label="货主" min-width="130" show-overflow-tooltip
+          ><template #default="{ row }">{{ ownerName(row.ownerId) }}</template></el-table-column
+        >
+        <el-table-column label="仓库" min-width="150"
+          ><template #default="{ row }">{{ warehouseName(row.warehouseId) }}</template></el-table-column
+        >
+        <el-table-column label="盘点类型" width="110" align="center"
+          ><template #default="{ row }">{{ optionLabel(CHECK_TYPE, row.checkType) }}</template></el-table-column
+        >
+        <el-table-column label="已盘/明细" width="110" align="right"
+          ><template #default="{ row }">{{ row.countedCount }} / {{ row.itemCount }}</template></el-table-column
+        >
+        <el-table-column label="创建时间" width="160" align="center"
+          ><template #default="{ row }">{{ formatDateTime(row.createTime) }}</template></el-table-column
+        >
         <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip />
         <el-table-column label="操作" width="320" fixed="right" align="center">
           <template #default="{ row }">
@@ -236,6 +245,7 @@
           <el-descriptions-item label="盘点类型">{{
             optionLabel(CHECK_TYPE, detail.order.checkType)
           }}</el-descriptions-item>
+          <el-descriptions-item label="创建时间">{{ formatDateTime(detail.order.createTime) }}</el-descriptions-item>
         </el-descriptions>
       </div>
       <div class="detail-toolbar">
@@ -252,8 +262,8 @@
       <el-table v-loading="detail.loading" :data="detailList" border size="small">
         <el-table-column type="index" label="#" width="50" align="center" />
         <el-table-column prop="productCode" label="商品编码" min-width="110" show-overflow-tooltip />
-        <el-table-column label="库位" width="80" align="center"
-          ><template #default="{ row }">{{ row.locationId || '-' }}</template></el-table-column
+        <el-table-column label="库位" min-width="100" align="center" show-overflow-tooltip
+          ><template #default="{ row }">{{ locationCode(row.locationId) }}</template></el-table-column
         >
         <el-table-column prop="batchNo" label="批次" min-width="90" show-overflow-tooltip />
         <el-table-column prop="systemQty" label="账面量" width="90" align="right">
@@ -373,13 +383,13 @@ import { useLocalPage } from '@/composables/useLocalPage'
 import { useDialogForm } from '@/composables/useDialogForm'
 import { useOrderDetail } from '@/composables/useOrderDetail'
 import { confirmAction } from '@/utils/confirm'
-import { settledValue } from '@/utils'
+import { settledValue, formatDateTime } from '@/utils'
 import { useRefDataStore } from '@/stores/refData'
 import { CHECK_STATUS, CHECK_TYPE, dictLabel, dictType, optionLabel } from '@/constants/dict'
 
 const refData = useRefDataStore()
 const { owners, warehouses, areas, locations, materials } = storeToRefs(refData)
-const { ownerName, warehouseName } = refData
+const { ownerName, warehouseName, locationCode } = refData
 const loading = ref(false)
 const rawList = ref([])
 const search = reactive({ keyword: '', warehouseId: '', status: '' })
@@ -409,7 +419,7 @@ const filtered = computed(() =>
 )
 const { page, pagedList } = useLocalPage(filtered, search)
 
-const { detail, detailList, reloadDetail, openDetail, syncDetail } = useOrderDetail((id) => checkDetailApi.list(id))
+const { detail, detailList, openDetail, syncDetail } = useOrderDetail((id) => checkDetailApi.list(id))
 const detailEditable = computed(() => ['DRAFT', 'CHECKING'].includes(detail.order?.status))
 // 盘点中仅可录入实盘量 / 备注，增删明细仅草稿
 const detailCounting = computed(() => detail.order?.status === 'CHECKING')
@@ -523,7 +533,7 @@ const {
   }),
   create: (f) => checkDetailApi.add(toDetailPayload(f)),
   update: (f) => checkDetailApi.update(f.id, toDetailPayload(f)),
-  onSuccess: reloadDetail,
+  onSuccess: () => loadData(),
   createText: '添加成功'
 })
 const openDetailForm = (row) => {
@@ -543,7 +553,7 @@ const onMaterialChange = (id) => {
 const deleteDetail = (row) =>
   confirmAction('确定删除该明细吗？', () => checkDetailApi.delete(row.id), {
     successText: '删除成功',
-    onSuccess: reloadDetail
+    onSuccess: () => loadData()
   })
 
 onMounted(() => loadData())

@@ -8,7 +8,7 @@ vi.mock('@/api', () => ({
   locationApi: { list: vi.fn() },
   materialApi: { getAllMaterials: vi.fn() }
 }))
-import { ownerApi, warehouseApi } from '@/api'
+import { ownerApi, warehouseApi, locationApi } from '@/api'
 import { useRefDataStore } from './refData'
 
 describe('useRefDataStore', () => {
@@ -27,6 +27,15 @@ describe('useRefDataStore', () => {
     expect(store.ownerName(1)).toBe('货主A')
     expect(store.warehouseName(2)).toBe('仓库B')
     expect(store.ownerName(99)).toBe('-')
+  })
+
+  it('库位显示编码：空值为 -，缓存中不存在时显示 #id', async () => {
+    locationApi.list.mockResolvedValue([{ id: 7, locationCode: 'A-01-01' }])
+    const store = useRefDataStore()
+    await store.ensure(['locations'])
+    expect(store.locationCode(7)).toBe('A-01-01')
+    expect(store.locationCode(8)).toBe('#8')
+    expect(store.locationCode(null)).toBe('-')
   })
 
   it('force 强制重拉，invalidate 后下次重拉', async () => {

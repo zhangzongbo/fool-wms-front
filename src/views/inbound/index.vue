@@ -91,8 +91,18 @@
 
     <el-card class="table-card">
       <el-table v-loading="loading" :data="pagedList" stripe border>
-        <el-table-column type="index" label="#" width="55" align="center" />
-        <el-table-column prop="inboundCode" label="入库单号" min-width="160" show-overflow-tooltip />
+        <el-table-column type="index" label="#" width="55" align="center" fixed="left" />
+        <el-table-column prop="inboundCode" label="入库单号" min-width="160" fixed="left" show-overflow-tooltip />
+        <el-table-column label="状态" width="100" align="center" fixed="left">
+          <template #default="{ row }"
+            ><el-tag :type="dictType(INBOUND_STATUS, row.status)">{{
+              dictLabel(INBOUND_STATUS, row.status)
+            }}</el-tag></template
+          >
+        </el-table-column>
+        <el-table-column label="货主" min-width="130" show-overflow-tooltip
+          ><template #default="{ row }">{{ ownerName(row.ownerId) }}</template></el-table-column
+        >
         <el-table-column label="仓库" min-width="150"
           ><template #default="{ row }">{{ warehouseName(row.warehouseId) }}</template></el-table-column
         >
@@ -100,13 +110,12 @@
         <el-table-column label="入库类型" width="110" align="center"
           ><template #default="{ row }">{{ optionLabel(INBOUND_TYPE, row.inboundType) }}</template></el-table-column
         >
-        <el-table-column label="状态" width="100" align="center">
-          <template #default="{ row }"
-            ><el-tag :type="dictType(INBOUND_STATUS, row.status)">{{
-              dictLabel(INBOUND_STATUS, row.status)
-            }}</el-tag></template
-          >
-        </el-table-column>
+        <el-table-column label="明细" width="110" align="right"
+          ><template #default="{ row }">{{ row.itemCount }} 项 / {{ row.totalQuantity }}</template></el-table-column
+        >
+        <el-table-column label="创建时间" width="160" align="center"
+          ><template #default="{ row }">{{ formatDateTime(row.createTime) }}</template></el-table-column
+        >
         <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip />
         <el-table-column label="操作" width="300" fixed="right" align="center">
           <template #default="{ row }">
@@ -225,6 +234,7 @@
           <el-descriptions-item label="仓库">{{ warehouseName(detail.order.warehouseId) }}</el-descriptions-item>
           <el-descriptions-item label="货主">{{ ownerName(detail.order.ownerId) }}</el-descriptions-item>
           <el-descriptions-item label="供应商">{{ detail.order.supplierName || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="创建时间">{{ formatDateTime(detail.order.createTime) }}</el-descriptions-item>
         </el-descriptions>
       </div>
       <div class="detail-toolbar">
@@ -245,8 +255,8 @@
         <el-table-column prop="quantity" label="数量" width="80" align="right" />
         <el-table-column prop="unit" label="单位" width="60" align="center" />
         <el-table-column prop="batchNo" label="批次" min-width="90" show-overflow-tooltip />
-        <el-table-column label="库位" width="80" align="center"
-          ><template #default="{ row }">{{ row.locationId || '-' }}</template></el-table-column
+        <el-table-column label="库位" min-width="100" align="center" show-overflow-tooltip
+          ><template #default="{ row }">{{ locationCode(row.locationId) }}</template></el-table-column
         >
         <el-table-column v-if="detail.order?.status === 'DRAFT'" label="操作" width="120" align="center">
           <template #default="{ row }">
@@ -339,13 +349,13 @@ import { useLocalPage } from '@/composables/useLocalPage'
 import { useDialogForm } from '@/composables/useDialogForm'
 import { useOrderDetail } from '@/composables/useOrderDetail'
 import { confirmAction } from '@/utils/confirm'
-import { settledValue } from '@/utils'
+import { settledValue, formatDateTime } from '@/utils'
 import { useRefDataStore } from '@/stores/refData'
 import { INBOUND_STATUS, INBOUND_TYPE, dictLabel, dictType, optionLabel } from '@/constants/dict'
 
 const refData = useRefDataStore()
 const { owners, warehouses, locations, materials } = storeToRefs(refData)
-const { ownerName, warehouseName } = refData
+const { ownerName, warehouseName, locationCode } = refData
 const loading = ref(false)
 const rawList = ref([])
 const search = reactive({ keyword: '', warehouseId: '', status: '' })
@@ -364,7 +374,7 @@ const filtered = computed(() =>
 )
 const { page, pagedList } = useLocalPage(filtered, search)
 
-const { detail, detailList, reloadDetail, openDetail, syncDetail } = useOrderDetail((id) => inboundDetailApi.list(id))
+const { detail, detailList, openDetail, syncDetail } = useOrderDetail((id) => inboundDetailApi.list(id))
 
 // force：刷新按钮强制重拉参考数据；操作后刷新仅重拉单据
 const loadData = async (force = false) => {
@@ -474,7 +484,7 @@ const {
   }),
   create: (f) => inboundDetailApi.add(f),
   update: (f) => inboundDetailApi.update(f.id, f),
-  onSuccess: reloadDetail,
+  onSuccess: () => loadData(),
   createText: '添加成功'
 })
 const openDetailForm = (row) => {
@@ -499,7 +509,7 @@ const onMaterialChange = (id) => {
 const deleteDetail = (row) =>
   confirmAction('确定删除该明细吗？', () => inboundDetailApi.delete(row.id), {
     successText: '删除成功',
-    onSuccess: reloadDetail
+    onSuccess: () => loadData()
   })
 
 onMounted(() => loadData())
