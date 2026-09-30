@@ -35,30 +35,6 @@ a:hover {
   color: var(--brand-primary-hover);
 }
 
-button {
-  border-radius: 6px;
-  border: 1px solid transparent;
-  padding: 0.5em 1em;
-  font-size: 14px;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: var(--brand-primary);
-  color: #ffffff;
-  cursor: pointer;
-  transition: background-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-button:hover {
-  background-color: var(--brand-primary-hover);
-  box-shadow: 0 8px 16px rgba(20, 90, 150, 0.18);
-}
-
-button:focus,
-button:focus-visible {
-  outline: 3px solid rgba(23, 101, 173, 0.25);
-  outline-offset: 2px;
-}
-
 #app {
   width: 100%;
   height: 100%;
