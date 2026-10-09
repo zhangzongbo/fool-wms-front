@@ -18,8 +18,8 @@
           :collapse-transition="false"
           class="sidebar-menu"
           background-color="transparent"
-          text-color="#c7d2e6"
-          active-text-color="#ffffff"
+          text-color="var(--wms-on-dark-text-regular)"
+          active-text-color="var(--wms-on-dark-text)"
           router
         >
           <template v-for="item in menus" :key="item.path || item.title">
@@ -40,12 +40,6 @@
           </template>
         </el-menu>
       </el-scrollbar>
-
-      <div v-if="!isCollapse" class="sidebar-footer">
-        <div class="footer-title">当前环境</div>
-        <div class="footer-text">{{ environmentLabel }}</div>
-        <div class="footer-sub">{{ systemName }} · v1.0</div>
-      </div>
     </el-aside>
 
     <!-- 主内容区域 -->
@@ -68,8 +62,11 @@
 
         <div class="header-right">
           <el-space :size="16" alignment="center">
-            <el-tag class="env-tag" effect="plain" round>{{ environmentLabel }}</el-tag>
-            <el-divider direction="vertical" />
+            <!-- 环境标签只在非生产环境显示，且全站只此一处 -->
+            <template v-if="environmentLabel">
+              <el-tag class="env-tag" effect="plain" round>{{ environmentLabel }}</el-tag>
+              <el-divider direction="vertical" />
+            </template>
             <el-dropdown @command="handleCommand">
               <span class="user-info">
                 <el-avatar :size="30" class="user-avatar">{{ avatarText }}</el-avatar>
@@ -108,7 +105,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { ElMessageBox, ElMessage } from 'element-plus'
@@ -127,8 +124,12 @@ const displayName = computed(() => userStore.displayName)
 const avatarText = computed(() => displayName.value.charAt(0).toUpperCase())
 
 const appStore = useAppStore()
-// 折叠状态持久化到 localStorage（App.vue 启动时由 initAppSettings 恢复）
+// 折叠状态：手动选择持久化到 localStorage（App.vue 启动时由 initAppSettings 恢复）；
+// 未手动选择时随窗口宽度自动折叠（窄于 1440）
 const isCollapse = computed(() => appStore.sidebarCollapsed)
+const onResize = () => appStore.autoCollapseByWidth(window.innerWidth)
+onMounted(() => window.addEventListener('resize', onResize))
+onBeforeUnmount(() => window.removeEventListener('resize', onResize))
 const systemName = import.meta.env.VITE_APP_TITLE || 'Fool WMS'
 
 // 菜单由路由表生成（Layout 子路由，按声明顺序），无权限的项隐藏，分组内无可见项时整组隐藏
@@ -153,25 +154,24 @@ const menus = computed(() => {
   return result
 })
 
+// 环境标签文案；生产环境返回空串（不显示）
 const resolveEnvironmentLabel = () => {
   const source = import.meta.env.VITE_APP_ENV || import.meta.env.MODE || 'prod'
   const normalized = String(source).toLowerCase()
-  if (normalized === 'prod' || normalized === 'production') return '生产环境'
+  if (normalized === 'prod' || normalized === 'production') return ''
   if (normalized === 'uat') return '预发布环境'
   if (normalized === 'test') return '测试环境'
   if (normalized === 'dev' || normalized === 'development') return '开发环境'
   return normalized.toUpperCase()
 }
-const environmentLabel = ref(resolveEnvironmentLabel())
+const environmentLabel = resolveEnvironmentLabel()
 
 // 详情 / 编辑等隐藏页高亮所属列表（meta.activeMenu）
 const activeMenu = computed(() => route.meta?.activeMenu || route.path)
 const breadcrumb = computed(() => resolveBreadcrumb(route, listLocation))
 
-const toggleSidebar = () => {
-  appStore.toggleSidebar()
-  appStore.saveSidebarState()
-}
+// 手动切换：记住选择，之后不再随窗口宽度自动折叠
+const toggleSidebar = () => appStore.toggleSidebar()
 
 const handleCommand = async (command) => {
   if (command === 'logout') {
@@ -193,39 +193,40 @@ const handleCommand = async (command) => {
 
 <style scoped>
 .layout-container {
-  height: 100vh;
-  background-color: var(--brand-bg);
+  /* 高度随 #app（100%），出现横向滚动条时不会被裁掉底部 */
+  height: 100%;
+  background-color: var(--wms-bg);
 }
 
 .sidebar {
-  background: linear-gradient(180deg, #0f1d3a 0%, #14224a 60%, #182a52 100%);
+  background: linear-gradient(180deg, var(--wms-dark-bg-1) 0%, var(--wms-dark-bg-2) 60%, var(--wms-dark-bg-3) 100%);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid var(--wms-on-dark-divider);
   transition: width 0.28s ease;
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 20px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  gap: var(--wms-space-md);
+  padding: 18px;
+  border-bottom: 1px solid var(--wms-on-dark-divider);
 }
 
 .logo-mark {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #409eff, #1765ad);
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--wms-radius-lg);
+  background: var(--wms-mark-gradient);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--wms-on-dark-text);
   font-size: 18px;
   font-weight: 800;
-  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.4);
+  box-shadow: var(--wms-mark-shadow);
 }
 
 .logo-info {
@@ -236,17 +237,17 @@ const handleCommand = async (command) => {
 .logo-title {
   font-size: 16px;
   font-weight: 600;
-  color: #fff;
+  color: var(--wms-on-dark-text);
 }
 .logo-desc {
   font-size: 11px;
-  color: rgba(199, 210, 230, 0.7);
+  color: var(--wms-on-dark-text-muted);
   letter-spacing: 0.5px;
 }
 
 .sidebar-scroll {
   flex: 1;
-  padding: 12px 0;
+  padding: var(--wms-space-md) 0;
 }
 .sidebar-menu {
   border-right: none;
@@ -254,66 +255,45 @@ const handleCommand = async (command) => {
 
 .menu-item,
 .menu-sub :deep(.el-sub-menu__title) {
-  border-radius: 8px;
-  margin: 3px 12px;
+  border-radius: var(--wms-radius-lg);
+  margin: 3px var(--wms-space-md);
 }
 .menu-item {
   height: 44px;
   line-height: 44px;
 }
 .menu-item.is-active {
-  background: linear-gradient(90deg, rgba(64, 158, 255, 0.28), rgba(64, 158, 255, 0.1));
-  color: #fff !important;
+  background: linear-gradient(90deg, var(--wms-on-dark-active-bg), var(--wms-on-dark-active-bg-end));
+  color: var(--wms-on-dark-text) !important;
   font-weight: 600;
 }
 .menu-item:hover,
 .menu-sub :deep(.el-sub-menu__title):hover {
-  background: rgba(64, 158, 255, 0.14);
-  color: #fff;
+  background: var(--wms-on-dark-hover-bg);
+  color: var(--wms-on-dark-text);
 }
 .menu-item .el-icon,
 .menu-sub .el-icon {
   font-size: 17px;
 }
 
-.sidebar-footer {
-  padding: 16px 18px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  font-size: 12px;
-}
-.footer-title {
-  font-size: 12px;
-  color: rgba(199, 210, 230, 0.6);
-  margin-bottom: 4px;
-}
-.footer-text {
-  font-size: 13px;
-  font-weight: 600;
-  color: #77b5ff;
-  margin-bottom: 2px;
-}
-.footer-sub {
-  font-size: 11px;
-  color: rgba(199, 210, 230, 0.55);
-}
-
 .header {
-  background: #fff;
+  background: var(--wms-bg-card);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 28px;
-  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
-  border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+  padding: 0 var(--wms-page-padding-x);
+  box-shadow: var(--wms-shadow-header);
+  border-bottom: 1px solid var(--wms-border-light);
   z-index: 10;
 }
 .header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--wms-space-lg);
 }
 .collapse-btn {
-  color: var(--brand-secondary);
+  color: var(--wms-color-secondary);
 }
 .header-breadcrumb {
   font-size: 14px;
@@ -324,28 +304,28 @@ const handleCommand = async (command) => {
   align-items: center;
 }
 .env-tag {
-  border-color: rgba(23, 101, 173, 0.24);
-  color: var(--brand-primary);
+  border-color: var(--el-color-primary-light-7);
+  color: var(--wms-color-primary);
 }
 .user-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--wms-space-sm);
   cursor: pointer;
   padding: 6px 12px 6px 6px;
   border-radius: 999px;
   transition: background-color 0.2s ease;
 }
 .user-info:hover {
-  background: #f0f5fb;
+  background: var(--wms-bg-hover);
 }
 .user-avatar {
-  background: linear-gradient(135deg, #409eff, #1765ad);
+  background: var(--wms-mark-gradient);
   font-weight: 600;
 }
 .user-name {
   font-size: 14px;
-  color: var(--brand-secondary);
+  color: var(--wms-color-secondary);
   font-weight: 500;
 }
 .dropdown-user {
@@ -354,18 +334,19 @@ const handleCommand = async (command) => {
   line-height: 1.5;
 }
 .dropdown-user small {
-  color: var(--brand-text-secondary);
+  color: var(--wms-text-secondary);
 }
 
+/* el-main 在纵向 el-container 中为 flex: 1，min-height: 0 让它不被内容撑高，滚动交给 .page-wrapper */
 .main-content {
   background: transparent;
   padding: 0;
-  height: calc(100vh - 60px);
+  min-height: 0;
   overflow: hidden;
 }
 .page-wrapper {
   height: 100%;
   overflow: auto;
-  background: var(--brand-bg);
+  background: var(--wms-bg);
 }
 </style>

@@ -6,15 +6,12 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
 import { useAppStore } from '@/stores'
 
 const appStore = useAppStore()
 
-onMounted(() => {
-  // 初始化应用设置
-  appStore.initAppSettings()
-})
+// 在 setup 中同步恢复侧栏状态（早于子组件首次渲染），避免 Layout 先按展开渲染再折叠的闪动
+appStore.initAppSettings()
 </script>
 
 <style>
@@ -25,21 +22,34 @@ onMounted(() => {
   box-sizing: border-box;
 }
 
-html,
+/*
+ * 外壳滚动链（U15）：
+ * - 视口只负责横向滚动：窗口窄于 #app 最小宽度（1024）时出现横向滚动条，而不是裁切；
+ *   纵向不滚动（overflow-y: hidden），纵向滚动统一交给 Layout 的 .page-wrapper，避免双纵向滚动条
+ * - 高度一律用 100% 而非 100vh：出现横向滚动条时 100% 会扣除滚动条高度，100vh 不会（底部会被裁掉一截）
+ */
+html {
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
 body {
   height: 100%;
-  font-family: var(--brand-font, 'Inter', 'Segoe UI', 'PingFang SC', sans-serif);
-  background-color: var(--brand-bg);
-  overflow: hidden;
+  /* body 也设最小宽度：弹窗打开时 Element Plus 会给 body 加 overflow: hidden，
+     若只有 #app 设最小宽度，窄窗口下弹窗期间 #app 会被 body 裁切 */
+  min-width: var(--wms-app-min-width);
+  font-family: var(--wms-font-family);
+  background-color: var(--wms-bg);
 }
 
 #app {
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-  /* 桌面端后台，最小宽度只在此处统一设置 */
-  min-width: 1280px;
-  background-color: var(--brand-bg);
+  width: 100%;
+  height: 100%;
+  /* 桌面端后台最小宽度（--wms-app-min-width）；更窄时由视口横向滚动 */
+  min-width: var(--wms-app-min-width);
+  text-align: left;
+  background-color: var(--wms-bg);
 }
 
 /* 滚动条样式 */
@@ -49,17 +59,17 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #eef2f8;
+  background: var(--wms-scrollbar-track);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(23, 101, 173, 0.35);
+  background: var(--wms-scrollbar-thumb);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(23, 101, 173, 0.55);
+  background: var(--wms-scrollbar-thumb-hover);
 }
 
 /* Element Plus 样式覆盖 */

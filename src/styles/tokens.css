@@ -1,0 +1,165 @@
+/*
+ * 设计令牌（主题变量，U14）
+ * - main.js 中紧跟 element-plus/dist/index.css 引入：同为 :root 选择器，后引入者覆盖 Element Plus 默认变量
+ * - 全站颜色 / 圆角 / 阴影 / 间距只在本文件写字面值，其余样式一律引用 var(--wms-*) 或 var(--el-*)
+ * - 不做暗色模式；智能助手页（views/agent-chat）沿用自身配色，只随 Element Plus 主色变化
+ */
+:root {
+  /* ---------- 品牌色 ---------- */
+  --wms-color-primary: #1765ad;
+  --wms-color-primary-hover: #145a96;
+  --wms-color-primary-active: #12518a;
+  --wms-color-secondary: #0b3d70;
+
+  /* ---------- 语义色（全站唯一一套，Element Plus 同步覆盖） ---------- */
+  --wms-color-success: #2f9e44;
+  --wms-color-warning: #e8890c;
+  --wms-color-danger: #d93f3f;
+  --wms-color-info: #909399;
+
+  /* ---------- 文字 ---------- */
+  --wms-text-primary: #1d2129;
+  --wms-text-secondary: #4e5969;
+  --wms-text-tertiary: #86909c;
+  --wms-text-placeholder: #a9aeb8;
+  --wms-text-disabled: #c9cdd4;
+
+  /* ---------- 边框 / 背景 ---------- */
+  --wms-border: #d0d5dd;
+  --wms-border-light: #ebeef5;
+  --wms-bg: #f4f5f9;
+  --wms-bg-card: #ffffff;
+  --wms-bg-hover: #f0f5fb;
+
+  /* ---------- 深色区域（侧栏、登录页品牌区） ---------- */
+  --wms-dark-bg-1: #0f1d3a;
+  --wms-dark-bg-2: #14224a;
+  --wms-dark-bg-3: #182a52;
+  --wms-dark-bg-4: #1c3a72;
+  --wms-on-dark-text: #ffffff;
+  --wms-on-dark-text-regular: #c7d2e6;
+  --wms-on-dark-text-muted: rgba(199, 210, 230, 0.7);
+  --wms-on-dark-divider: rgba(255, 255, 255, 0.08);
+  --wms-on-dark-hover-bg: rgba(93, 147, 198, 0.16);
+  --wms-on-dark-active-bg: rgba(93, 147, 198, 0.3);
+  --wms-on-dark-active-bg-end: rgba(93, 147, 198, 0.1);
+  /* Logo 方块：主色 light-3 → 主色 */
+  --wms-mark-gradient: linear-gradient(135deg, #5d93c6, #1765ad);
+  --wms-mark-shadow: 0 6px 16px rgba(23, 101, 173, 0.4);
+
+  /* ---------- 滚动条 ---------- */
+  --wms-scrollbar-track: #eef2f8;
+  --wms-scrollbar-thumb: rgba(23, 101, 173, 0.35);
+  --wms-scrollbar-thumb-hover: rgba(23, 101, 173, 0.55);
+
+  /* ---------- 圆角 ---------- */
+  --wms-radius-sm: 4px;
+  --wms-radius-md: 6px;
+  --wms-radius-lg: 8px;
+
+  /* ---------- 阴影 ---------- */
+  --wms-shadow-card: 0 2px 8px rgba(15, 23, 42, 0.06);
+  --wms-shadow-card-hover: 0 6px 16px rgba(15, 23, 42, 0.1);
+  --wms-shadow-header: 0 1px 4px rgba(15, 23, 42, 0.06);
+  --wms-shadow-popover: 0 6px 16px rgba(15, 23, 42, 0.12);
+
+  /* ---------- 间距 ---------- */
+  --wms-space-xs: 4px;
+  --wms-space-sm: 8px;
+  --wms-space-md: 12px;
+  --wms-space-lg: 16px;
+  --wms-space-xl: 20px;
+  --wms-space-xxl: 24px;
+  /* 页面内容区边距（宽屏由 common.css 媒体查询放大） */
+  --wms-page-padding-y: 16px;
+  --wms-page-padding-x: 20px;
+
+  /* ---------- 布局 ---------- */
+  /* 桌面端最小宽度：更窄时出现横向滚动（App.vue / 登录页共用） */
+  --wms-app-min-width: 1024px;
+
+  /* ---------- 字体 ---------- */
+  --wms-font-family: 'Inter', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+
+  /* ---------- 旧变量别名：未改造的页面（含 agent-chat）仍引用 --brand-*，保持可用 ---------- */
+  --brand-font: var(--wms-font-family);
+  --brand-primary: var(--wms-color-primary);
+  --brand-primary-hover: var(--wms-color-primary-hover);
+  --brand-secondary: var(--wms-color-secondary);
+  --brand-bg: var(--wms-bg);
+  --brand-text: var(--wms-text-primary);
+  --brand-text-secondary: var(--wms-text-secondary);
+  --brand-border: var(--wms-border);
+  --brand-card-shadow: var(--wms-shadow-card);
+
+  /*
+   * ---------- Element Plus 覆盖 ----------
+   * 色阶按 Element Plus 自身算法预先算好写死（不依赖 SCSS）：
+   *   light-N = mix(#ffffff, 基色, N × 10%)，dark-2 = mix(#000000, 基色, 20%)
+   */
+  --el-color-primary: var(--wms-color-primary);
+  --el-color-primary-rgb: 23, 101, 173;
+  --el-color-primary-light-3: #5d93c6;
+  --el-color-primary-light-5: #8bb2d6;
+  --el-color-primary-light-7: #b9d1e6;
+  --el-color-primary-light-8: #d1e0ef;
+  --el-color-primary-light-9: #e8f0f7;
+  --el-color-primary-dark-2: #12518a;
+
+  --el-color-success: var(--wms-color-success);
+  --el-color-success-rgb: 47, 158, 68;
+  --el-color-success-light-3: #6dbb7c;
+  --el-color-success-light-5: #97cfa2;
+  --el-color-success-light-7: #c1e2c7;
+  --el-color-success-light-8: #d5ecda;
+  --el-color-success-light-9: #eaf5ec;
+  --el-color-success-dark-2: #267e36;
+
+  --el-color-warning: var(--wms-color-warning);
+  --el-color-warning-rgb: 232, 137, 12;
+  --el-color-warning-light-3: #efac55;
+  --el-color-warning-light-5: #f4c486;
+  --el-color-warning-light-7: #f8dcb6;
+  --el-color-warning-light-8: #fae7ce;
+  --el-color-warning-light-9: #fdf3e7;
+  --el-color-warning-dark-2: #ba6e0a;
+
+  /* danger 与 error 同色：全站只有一种红 */
+  --el-color-danger: var(--wms-color-danger);
+  --el-color-danger-rgb: 217, 63, 63;
+  --el-color-danger-light-3: #e47979;
+  --el-color-danger-light-5: #ec9f9f;
+  --el-color-danger-light-7: #f4c5c5;
+  --el-color-danger-light-8: #f7d9d9;
+  --el-color-danger-light-9: #fbecec;
+  --el-color-danger-dark-2: #ae3232;
+  --el-color-error: var(--wms-color-danger);
+  --el-color-error-rgb: 217, 63, 63;
+  --el-color-error-light-3: #e47979;
+  --el-color-error-light-5: #ec9f9f;
+  --el-color-error-light-7: #f4c5c5;
+  --el-color-error-light-8: #f7d9d9;
+  --el-color-error-light-9: #fbecec;
+  --el-color-error-dark-2: #ae3232;
+
+  /* info 沿用 Element Plus 默认灰（与品牌蓝协调），显式写出便于统一维护 */
+  --el-color-info: var(--wms-color-info);
+  --el-color-info-rgb: 144, 147, 153;
+  --el-color-info-light-3: #b1b3b8;
+  --el-color-info-light-5: #c8c9cc;
+  --el-color-info-light-7: #dedfe0;
+  --el-color-info-light-8: #e9e9eb;
+  --el-color-info-light-9: #f4f4f5;
+  --el-color-info-dark-2: #73767a;
+
+  /* 文字色与品牌文字对齐 */
+  --el-text-color-primary: var(--wms-text-primary);
+  --el-text-color-regular: var(--wms-text-secondary);
+  --el-text-color-secondary: var(--wms-text-tertiary);
+  --el-text-color-placeholder: var(--wms-text-placeholder);
+  --el-text-color-disabled: var(--wms-text-disabled);
+
+  --el-bg-color-page: var(--wms-bg);
+  --el-border-radius-base: var(--wms-radius-md);
+  --el-font-family: var(--wms-font-family);
+}

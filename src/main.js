@@ -3,6 +3,8 @@ import { createPinia } from 'pinia'
 import { ElMessage, ElMessageBox, provideGlobalConfig } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import 'element-plus/dist/index.css'
+// 主题变量须紧跟 Element Plus 样式：同为 :root，后引入者覆盖 --el-* 默认值
+import './styles/tokens.css'
 import './style.css'
 import './styles/common.css'
 import App from './App.vue'

@@ -9,10 +9,10 @@
     <!-- 统计卡片 -->
     <el-row :gutter="16" class="stats-row">
       <el-col :span="6"
-        ><div class="stat-card" @click="go('/owner')">
+        ><div class="stat-card is-clickable" @click="go('/owner')">
           <div class="stat-content">
-            <div class="stat-icon" style="background: #e8f1fd">
-              <el-icon color="#1765ad"><User /></el-icon>
+            <div class="stat-icon tone-primary">
+              <el-icon><User /></el-icon>
             </div>
             <div class="stat-text">
               <div class="stat-value">{{ stats.owner }}</div>
@@ -22,10 +22,10 @@
         </div></el-col
       >
       <el-col :span="6"
-        ><div class="stat-card" @click="go('/warehouse')">
+        ><div class="stat-card is-clickable" @click="go('/warehouse')">
           <div class="stat-content">
-            <div class="stat-icon" style="background: #e8f6ee">
-              <el-icon color="#34a853"><OfficeBuilding /></el-icon>
+            <div class="stat-icon tone-success">
+              <el-icon><OfficeBuilding /></el-icon>
             </div>
             <div class="stat-text">
               <div class="stat-value">{{ stats.warehouse }}</div>
@@ -35,10 +35,10 @@
         </div></el-col
       >
       <el-col :span="6"
-        ><div class="stat-card" @click="go('/inventory')">
+        ><div class="stat-card is-clickable" @click="go('/inventory')">
           <div class="stat-content">
-            <div class="stat-icon" style="background: #fff4e6">
-              <el-icon color="#f59e0b"><Box /></el-icon>
+            <div class="stat-icon tone-warning">
+              <el-icon><Box /></el-icon>
             </div>
             <div class="stat-text">
               <div class="stat-value">{{ stats.inventory }}</div>
@@ -48,10 +48,11 @@
         </div></el-col
       >
       <el-col :span="6"
-        ><div class="stat-card danger">
+        ><!-- 汇总卡片无跳转目标：不加 is-clickable（无悬浮上浮与手型），明细见右侧待办清单 -->
+        <div class="stat-card is-danger">
           <div class="stat-content">
-            <div class="stat-icon" style="background: #fdecec">
-              <el-icon color="#f56c6c"><Bell /></el-icon>
+            <div class="stat-icon tone-danger">
+              <el-icon><Bell /></el-icon>
             </div>
             <div class="stat-text">
               <div class="stat-value">{{ stats.todo }}</div>
@@ -85,25 +86,25 @@
           <div class="todo-list">
             <div class="todo-item" @click="go('/inbound', 'AUDITED')">
               <div class="todo-left">
-                <el-icon color="#1765ad"><Download /></el-icon><span>入库单待完成</span>
+                <el-icon class="tone-primary"><Download /></el-icon><span>入库单待完成</span>
               </div>
               <el-badge :value="todo.inbound" :max="99" type="primary" :show-zero="false" />
             </div>
             <div class="todo-item" @click="go('/outbound', 'AUDITED')">
               <div class="todo-left">
-                <el-icon color="#f59e0b"><Coordinate /></el-icon><span>出库单待分配</span>
+                <el-icon class="tone-warning"><Coordinate /></el-icon><span>出库单待分配</span>
               </div>
               <el-badge :value="todo.allocate" :max="99" type="warning" :show-zero="false" />
             </div>
             <div class="todo-item" @click="go('/outbound', 'ALLOCATED')">
               <div class="todo-left">
-                <el-icon color="#34a853"><Upload /></el-icon><span>出库单待发货</span>
+                <el-icon class="tone-success"><Upload /></el-icon><span>出库单待发货</span>
               </div>
               <el-badge :value="todo.outbound" :max="99" type="success" :show-zero="false" />
             </div>
             <div class="todo-item" @click="go('/check', 'COUNTED')">
               <div class="todo-left">
-                <el-icon color="#f56c6c"><DocumentChecked /></el-icon><span>盘点单待过账</span>
+                <el-icon class="tone-danger"><DocumentChecked /></el-icon><span>盘点单待过账</span>
               </div>
               <el-badge :value="todo.check" :max="99" type="danger" :show-zero="false" />
             </div>
@@ -112,7 +113,7 @@
       </el-col>
     </el-row>
 
-    <el-row :gutter="16" style="margin-top: 16px">
+    <el-row :gutter="16" class="panel-row">
       <el-col :span="12">
         <el-card class="panel-card">
           <template #header
@@ -186,6 +187,17 @@ import { INBOUND_STATUS, OUTBOUND_STATUS, dictLabel, dictType } from '@/constant
 
 use([CanvasRenderer, BarChart, GridComponent, TooltipComponent, LegendComponent])
 
+/**
+ * 图表配色：ECharts 画在 canvas 上无法直接用 CSS 变量，这里在渲染时读取 styles/tokens.css 的 --wms-* 令牌，
+ * 保证与全站主色 / 语义色同源（改色只改 tokens.css）。令牌由 main.js 全局引入，组件渲染时必然已生效
+ */
+const cssToken = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+const chartPalette = () => ({
+  inbound: cssToken('--wms-color-primary'),
+  outbound: cssToken('--wms-color-success'),
+  check: cssToken('--wms-color-warning')
+})
+
 const router = useRouter()
 const loading = ref(false)
 // 待办跳转带上状态，列表页从 URL 恢复筛选（useServerList）
@@ -207,51 +219,54 @@ const todo = computed(() => ({
   check: cnt(check, 'COUNTED')
 }))
 
-const chartOption = computed(() => ({
-  tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-  legend: { bottom: 0, data: ['入库单', '出库单', '盘点单'] },
-  grid: { top: 20, left: 40, right: 20, bottom: 40 },
-  xAxis: { type: 'category', data: ['草稿', '已审核', '进行中', '已完成'] },
-  yAxis: { type: 'value', minInterval: 1 },
-  series: [
-    {
-      name: '入库单',
-      type: 'bar',
-      barMaxWidth: 26,
-      itemStyle: { color: '#409eff', borderRadius: [4, 4, 0, 0] },
-      data: [
-        cnt(inbound, 'DRAFT'),
-        cnt(inbound, 'AUDITED'),
-        cnt(inbound, 'RECEIVING') + cnt(inbound, 'PUTAWAY'),
-        cnt(inbound, 'FINISHED')
-      ]
-    },
-    {
-      name: '出库单',
-      type: 'bar',
-      barMaxWidth: 26,
-      itemStyle: { color: '#34a853', borderRadius: [4, 4, 0, 0] },
-      data: [
-        cnt(outbound, 'DRAFT'),
-        cnt(outbound, 'AUDITED'),
-        cnt(outbound, 'ALLOCATED') + cnt(outbound, 'PICKING') + cnt(outbound, 'CHECKING'),
-        cnt(outbound, 'SHIPPED')
-      ]
-    },
-    {
-      name: '盘点单',
-      type: 'bar',
-      barMaxWidth: 26,
-      itemStyle: { color: '#f59e0b', borderRadius: [4, 4, 0, 0] },
-      data: [
-        cnt(check, 'DRAFT'),
-        cnt(check, 'CHECKING'),
-        cnt(check, 'COUNTED'),
-        cnt(check, 'ADJUSTED') + cnt(check, 'FINISHED')
-      ]
-    }
-  ]
-}))
+const chartOption = computed(() => {
+  const palette = chartPalette()
+  return {
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    legend: { bottom: 0, data: ['入库单', '出库单', '盘点单'] },
+    grid: { top: 20, left: 40, right: 20, bottom: 40 },
+    xAxis: { type: 'category', data: ['草稿', '已审核', '进行中', '已完成'] },
+    yAxis: { type: 'value', minInterval: 1 },
+    series: [
+      {
+        name: '入库单',
+        type: 'bar',
+        barMaxWidth: 26,
+        itemStyle: { color: palette.inbound, borderRadius: [4, 4, 0, 0] },
+        data: [
+          cnt(inbound, 'DRAFT'),
+          cnt(inbound, 'AUDITED'),
+          cnt(inbound, 'RECEIVING') + cnt(inbound, 'PUTAWAY'),
+          cnt(inbound, 'FINISHED')
+        ]
+      },
+      {
+        name: '出库单',
+        type: 'bar',
+        barMaxWidth: 26,
+        itemStyle: { color: palette.outbound, borderRadius: [4, 4, 0, 0] },
+        data: [
+          cnt(outbound, 'DRAFT'),
+          cnt(outbound, 'AUDITED'),
+          cnt(outbound, 'ALLOCATED') + cnt(outbound, 'PICKING') + cnt(outbound, 'CHECKING'),
+          cnt(outbound, 'SHIPPED')
+        ]
+      },
+      {
+        name: '盘点单',
+        type: 'bar',
+        barMaxWidth: 26,
+        itemStyle: { color: palette.check, borderRadius: [4, 4, 0, 0] },
+        data: [
+          cnt(check, 'DRAFT'),
+          cnt(check, 'CHECKING'),
+          cnt(check, 'COUNTED'),
+          cnt(check, 'ADJUSTED') + cnt(check, 'FINISHED')
+        ]
+      }
+    ]
+  }
+})
 
 const loadData = async () => {
   loading.value = true
@@ -278,42 +293,102 @@ onMounted(loadData)
 </script>
 
 <style scoped>
+/* 统计卡片（仅仪表盘使用） */
+.stats-row {
+  margin-bottom: var(--wms-space-lg);
+}
 .stat-card {
+  border-radius: var(--wms-radius-lg);
+  box-shadow: var(--wms-shadow-card);
+  background: var(--wms-bg-card);
+  padding: var(--wms-space-xl);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+/* 只有可跳转的卡片才有手型与悬浮上浮 */
+.stat-card.is-clickable {
   cursor: pointer;
 }
+.stat-card.is-clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--wms-shadow-card-hover);
+}
 .stat-content {
-  flex-direction: row !important;
+  display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--wms-space-lg);
 }
 .stat-icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--wms-radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
+  font-size: 24px;
   flex-shrink: 0;
 }
 .stat-text {
   display: flex;
   flex-direction: column;
+  gap: var(--wms-space-xs);
 }
-.stat-content .stat-value {
+.stat-value {
   font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--wms-color-primary);
+}
+.stat-label {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--wms-text-secondary);
+}
+.stat-card.is-danger .stat-value {
+  color: var(--wms-color-danger);
+}
+
+/* 图标色调：前景为语义色，底色为对应 light-9 */
+.tone-primary {
+  color: var(--el-color-primary);
+}
+.tone-success {
+  color: var(--el-color-success);
+}
+.tone-warning {
+  color: var(--el-color-warning);
+}
+.tone-danger {
+  color: var(--el-color-danger);
+}
+.stat-icon.tone-primary {
+  background: var(--el-color-primary-light-9);
+}
+.stat-icon.tone-success {
+  background: var(--el-color-success-light-9);
+}
+.stat-icon.tone-warning {
+  background: var(--el-color-warning-light-9);
+}
+.stat-icon.tone-danger {
+  background: var(--el-color-danger-light-9);
+}
+
+.panel-row {
+  margin-top: var(--wms-space-lg);
 }
 .panel-card {
   border: none;
-  border-radius: 12px;
-  box-shadow: var(--brand-card-shadow);
+  border-radius: var(--wms-radius-lg);
+  box-shadow: var(--wms-shadow-card);
 }
 .panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-weight: 600;
-  color: var(--brand-secondary);
+  color: var(--wms-color-secondary);
 }
 .chart {
   height: 320px;
@@ -326,8 +401,8 @@ onMounted(loadData)
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 18px 8px;
-  border-bottom: 1px solid #f0f2f5;
+  padding: var(--wms-space-lg) var(--wms-space-sm);
+  border-bottom: 1px solid var(--wms-border-light);
   cursor: pointer;
   transition: background 0.2s ease;
 }
@@ -335,14 +410,14 @@ onMounted(loadData)
   border-bottom: none;
 }
 .todo-item:hover {
-  background: #f7fafd;
+  background: var(--wms-bg-hover);
 }
 .todo-left {
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 14px;
-  color: var(--brand-text);
+  color: var(--wms-text-primary);
 }
 .todo-left .el-icon {
   font-size: 18px;

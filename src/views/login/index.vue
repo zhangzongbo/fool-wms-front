@@ -110,10 +110,11 @@ const handleLogin = async () => {
 <style scoped>
 .login-page {
   display: flex;
-  width: 100vw;
-  height: 100vh;
-  min-width: 1024px;
-  background: var(--brand-bg);
+  /* 随 #app 铺满；最小宽度与 #app 同一令牌，更窄时由视口横向滚动 */
+  width: 100%;
+  height: 100%;
+  min-width: var(--wms-app-min-width);
+  background: var(--wms-bg);
 }
 
 /* 品牌区 */
@@ -121,8 +122,8 @@ const handleLogin = async () => {
   position: relative;
   flex: 1.15;
   overflow: hidden;
-  background: linear-gradient(150deg, #0f1d3a 0%, #14224a 55%, #1c3a72 100%);
-  color: #fff;
+  background: linear-gradient(150deg, var(--wms-dark-bg-1) 0%, var(--wms-dark-bg-2) 55%, var(--wms-dark-bg-4) 100%);
+  color: var(--wms-on-dark-text);
   display: flex;
   align-items: center;
   padding: 0 8%;
@@ -143,14 +144,14 @@ const handleLogin = async () => {
 .brand-mark {
   width: 42px;
   height: 42px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #409eff, #1765ad);
+  border-radius: var(--wms-radius-lg);
+  background: var(--wms-mark-gradient);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 22px;
   font-weight: 800;
-  box-shadow: 0 8px 20px rgba(64, 158, 255, 0.45);
+  box-shadow: var(--wms-mark-shadow);
 }
 .brand-title {
   font-size: 40px;
@@ -160,7 +161,7 @@ const handleLogin = async () => {
 }
 .brand-desc {
   font-size: 15px;
-  color: rgba(203, 213, 245, 0.85);
+  color: var(--wms-on-dark-text-regular);
   margin-bottom: 36px;
   line-height: 1.7;
 }
@@ -174,11 +175,11 @@ const handleLogin = async () => {
   align-items: center;
   gap: 10px;
   font-size: 14px;
-  color: rgba(219, 228, 248, 0.92);
+  color: var(--wms-on-dark-text-regular);
   padding: 10px 0;
 }
 .brand-points .el-icon {
-  color: #67e0a3;
+  color: var(--el-color-success-light-3);
   font-size: 16px;
 }
 
@@ -191,14 +192,14 @@ const handleLogin = async () => {
 .glow-1 {
   width: 380px;
   height: 380px;
-  background: #2f6fd6;
+  background: var(--el-color-primary-light-3);
   top: -80px;
   right: -60px;
 }
 .glow-2 {
   width: 300px;
   height: 300px;
-  background: #17408b;
+  background: var(--wms-color-primary);
   bottom: -100px;
   left: 20%;
 }
@@ -210,7 +211,7 @@ const handleLogin = async () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #fff;
+  background: var(--wms-bg-card);
   position: relative;
 }
 .login-card {
@@ -219,12 +220,12 @@ const handleLogin = async () => {
 .login-title {
   font-size: 26px;
   font-weight: 700;
-  color: var(--brand-secondary);
+  color: var(--wms-color-secondary);
   margin-bottom: 8px;
 }
 .login-subtitle {
   font-size: 14px;
-  color: var(--brand-text-secondary);
+  color: var(--wms-text-secondary);
   margin-bottom: 32px;
 }
 .login-btn {
@@ -233,30 +234,30 @@ const handleLogin = async () => {
   font-size: 16px;
   letter-spacing: 4px;
   margin-top: 8px;
-  border-radius: 8px;
+  border-radius: var(--wms-radius-lg);
 }
 .login-tip {
   margin-top: 24px;
   padding: 12px 14px;
-  border-radius: 8px;
-  background: #f0f7ff;
-  color: var(--brand-text-secondary);
+  border-radius: var(--wms-radius-lg);
+  background: var(--el-color-primary-light-9);
+  color: var(--wms-text-secondary);
   font-size: 13px;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 .login-tip .el-icon {
-  color: var(--brand-primary);
+  color: var(--wms-color-primary);
 }
 .login-tip b {
-  color: var(--brand-primary);
+  color: var(--wms-color-primary);
 }
 .login-copyright {
   position: absolute;
   bottom: 28px;
   font-size: 12px;
-  color: var(--brand-text-secondary);
+  color: var(--wms-text-secondary);
 }
 
 @media (max-width: 1024px) {
