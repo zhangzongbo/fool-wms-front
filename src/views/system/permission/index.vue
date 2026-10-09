@@ -1,42 +1,29 @@
 <template>
   <div class="page-container">
-    <div class="page-header">
-      <div class="header-title">
-        <h2>权限管理</h2>
-        <p class="page-subtitle">权限点主数据（菜单 / 按钮 / 接口），支撑角色授权与接口级鉴权</p>
-      </div>
-      <div class="header-actions">
-        <el-button v-perm="'sys:perm:add'" type="primary" @click="openCreate"
-          ><el-icon><Plus /></el-icon> 新增权限</el-button
-        >
-      </div>
-    </div>
+    <PageHeader subtitle="权限点主数据（菜单 / 按钮 / 接口），支撑角色授权与接口级鉴权">
+      <template #actions>
+        <el-button v-perm="'sys:perm:add'" type="primary" :icon="Plus" @click="openCreate">新增权限</el-button>
+      </template>
+    </PageHeader>
 
-    <el-card class="search-card">
-      <el-form :model="search" label-position="top" @submit.prevent>
-        <el-row :gutter="16">
-          <el-col :span="6"
-            ><el-form-item label="权限编码/名称"
-              ><el-input v-model="search.keyword" placeholder="编码或名称" clearable /></el-form-item
-          ></el-col>
-          <el-col :span="5"
-            ><el-form-item label="类型"
-              ><el-select v-model="search.permType" placeholder="全部" clearable style="width: 100%">
-                <el-option v-for="(v, k) in PERM_TYPE" :key="k" :label="v.label" :value="k" /></el-select></el-form-item
-          ></el-col>
-          <el-col :span="6"
-            ><el-form-item label=" ">
-              <el-button @click="resetSearch"
-                ><el-icon><Refresh /></el-icon>重置</el-button
-              >
-              <el-button @click="expandAll = !expandAll">{{ expandAll ? '收起' : '展开' }}全部</el-button>
-            </el-form-item></el-col
-          >
-        </el-row>
-      </el-form>
-    </el-card>
+    <SearchPanel :model="search" :show-search="false" :action-span="13" @reset="resetSearch">
+      <el-col :span="6"
+        ><el-form-item label="权限编码/名称"
+          ><el-input v-model="search.keyword" placeholder="编码或名称" clearable /></el-form-item
+      ></el-col>
+      <el-col :span="5"
+        ><el-form-item label="类型"
+          ><el-select v-model="search.permType" placeholder="全部" clearable style="width: 100%">
+            <el-option v-for="(v, k) in PERM_TYPE" :key="k" :label="v.label" :value="k" /></el-select></el-form-item
+      ></el-col>
+    </SearchPanel>
 
     <el-card class="table-card">
+      <TableToolbar :loading="loading" @refresh="loadData">
+        <template #actions>
+          <el-button @click="expandAll = !expandAll">{{ expandAll ? '收起' : '展开' }}全部</el-button>
+        </template>
+      </TableToolbar>
       <el-table
         :key="tableKey"
         v-loading="loading"
@@ -56,12 +43,8 @@
           >
         </el-table-column>
         <el-table-column prop="remark" label="描述" min-width="200" show-overflow-tooltip />
-        <el-table-column label="操作" width="120" align="center">
-          <template #default="{ row }"
-            ><el-button v-perm="'sys:perm:delete'" link type="danger" @click="handleDelete(row)"
-              >删除</el-button
-            ></template
-          >
+        <el-table-column label="操作" width="100" align="center">
+          <template #default="{ row }"><RowActions :actions="rowActions(row)" /></template>
         </el-table-column>
       </el-table>
     </el-card>
@@ -94,7 +77,11 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { Plus, Refresh } from '@element-plus/icons-vue'
+import { Plus } from '@element-plus/icons-vue'
+import PageHeader from '@/components/list-page/PageHeader.vue'
+import SearchPanel from '@/components/list-page/SearchPanel.vue'
+import TableToolbar from '@/components/list-page/TableToolbar.vue'
+import RowActions from '@/components/RowActions.vue'
 import { permissionApi } from '@/api'
 import { useDialogForm } from '@/composables/useDialogForm'
 import { confirmAction } from '@/utils/confirm'
@@ -167,6 +154,9 @@ const handleDelete = (row) =>
     successText: '删除成功',
     onSuccess: loadData
   })
+
+// 行操作：权限点不支持编辑，仅删除
+const rowActions = (row) => [{ label: '删除', perm: 'sys:perm:delete', danger: true, onClick: () => handleDelete(row) }]
 
 onMounted(loadData)
 </script>

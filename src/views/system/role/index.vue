@@ -1,29 +1,20 @@
 <template>
   <div class="page-container">
-    <div class="page-header">
-      <div class="header-title">
-        <h2>角色管理</h2>
-        <p class="page-subtitle">定义角色并授予权限点，用户通过角色获得访问能力</p>
-      </div>
-      <div class="header-actions">
-        <el-button v-perm="'sys:role:add'" type="primary" @click="openCreate"
-          ><el-icon><Plus /></el-icon> 新增角色</el-button
-        >
-      </div>
-    </div>
+    <PageHeader subtitle="定义角色并授予权限点，用户通过角色获得访问能力">
+      <template #actions>
+        <el-button v-perm="'sys:role:add'" type="primary" :icon="Plus" @click="openCreate">新增角色</el-button>
+      </template>
+    </PageHeader>
 
     <el-card class="table-card">
+      <TableToolbar :loading="loading" @refresh="loadData" />
       <el-table v-loading="loading" :data="rawList" stripe border>
         <el-table-column type="index" label="#" width="55" align="center" />
         <el-table-column prop="roleCode" label="角色编码" min-width="160" show-overflow-tooltip />
         <el-table-column prop="roleName" label="角色名称" min-width="160" show-overflow-tooltip />
         <el-table-column prop="remark" label="描述" min-width="220" show-overflow-tooltip />
-        <el-table-column label="操作" width="240" fixed="right" align="center">
-          <template #default="{ row }">
-            <el-button v-perm="'sys:role:update'" link type="primary" @click="openEdit(row)">编辑</el-button>
-            <el-button v-perm="'sys:role:assign'" link type="primary" @click="openPerms(row)">分配权限</el-button>
-            <el-button v-perm="'sys:role:delete'" link type="danger" @click="handleDelete(row)">删除</el-button>
-          </template>
+        <el-table-column label="操作" width="190" fixed="right" align="center">
+          <template #default="{ row }"><RowActions :actions="rowActions(row)" /></template>
         </el-table-column>
       </el-table>
     </el-card>
@@ -74,6 +65,9 @@
 import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
+import PageHeader from '@/components/list-page/PageHeader.vue'
+import TableToolbar from '@/components/list-page/TableToolbar.vue'
+import RowActions from '@/components/RowActions.vue'
 import { roleApi, permissionApi } from '@/api'
 import { useDialogForm } from '@/composables/useDialogForm'
 import { confirmAction } from '@/utils/confirm'
@@ -110,6 +104,13 @@ const handleDelete = (row) =>
     successText: '删除成功',
     onSuccess: loadData
   })
+
+// 行操作：编辑 > 分配权限；删除为危险操作
+const rowActions = (row) => [
+  { label: '编辑', perm: 'sys:role:update', onClick: () => openEdit(row) },
+  { label: '分配权限', perm: 'sys:role:assign', onClick: () => openPerms(row) },
+  { label: '删除', perm: 'sys:role:delete', danger: true, onClick: () => handleDelete(row) }
+]
 
 // 权限树
 const labelOf = (data) => `${data.permName || data.permCode}`

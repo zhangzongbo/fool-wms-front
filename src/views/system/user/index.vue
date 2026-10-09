@@ -1,48 +1,29 @@
 <template>
   <div class="page-container">
-    <div class="page-header">
-      <div class="header-title">
-        <h2>用户管理</h2>
-        <p class="page-subtitle">系统账号、角色分配与数据范围（货主）管控</p>
-      </div>
-      <div class="header-actions">
-        <el-button v-perm="'sys:user:add'" type="primary" @click="openCreate"
-          ><el-icon><Plus /></el-icon> 新增用户</el-button
-        >
-      </div>
-    </div>
+    <PageHeader subtitle="系统账号、角色分配与数据范围（货主）管控">
+      <template #actions>
+        <el-button v-perm="'sys:user:add'" type="primary" :icon="Plus" @click="openCreate">新增用户</el-button>
+      </template>
+    </PageHeader>
 
-    <el-card class="search-card">
-      <el-form :model="search" label-position="top" @submit.prevent>
-        <el-row :gutter="16">
-          <el-col :span="6"
-            ><el-form-item label="用户名/姓名"
-              ><el-input v-model="search.keyword" placeholder="用户名或姓名" clearable /></el-form-item
-          ></el-col>
-          <el-col :span="5"
-            ><el-form-item label="状态"
-              ><el-select v-model="search.status" placeholder="全部" clearable style="width: 100%">
-                <el-option
-                  v-for="s in ENABLE_STATUS"
-                  :key="s.value"
-                  :label="s.label"
-                  :value="s.value" /></el-select></el-form-item
-          ></el-col>
-          <el-col :span="8"
-            ><el-form-item label=" "
-              ><el-button type="primary" @click="page.current = 1"
-                ><el-icon><Search /></el-icon>查询</el-button
-              >
-              <el-button @click="resetSearch"
-                ><el-icon><Refresh /></el-icon>重置</el-button
-              ></el-form-item
-            ></el-col
-          >
-        </el-row>
-      </el-form>
-    </el-card>
+    <SearchPanel :model="search" :show-search="false" :action-span="13" @reset="resetSearch">
+      <el-col :span="6"
+        ><el-form-item label="用户名/姓名"
+          ><el-input v-model="search.keyword" placeholder="用户名或姓名" clearable /></el-form-item
+      ></el-col>
+      <el-col :span="5"
+        ><el-form-item label="状态"
+          ><el-select v-model="search.status" placeholder="全部" clearable style="width: 100%">
+            <el-option
+              v-for="s in ENABLE_STATUS"
+              :key="s.value"
+              :label="s.label"
+              :value="s.value" /></el-select></el-form-item
+      ></el-col>
+    </SearchPanel>
 
     <el-card class="table-card">
+      <TableToolbar :loading="loading" @refresh="loadData" />
       <el-table v-loading="loading" :data="pagedList" stripe border>
         <el-table-column type="index" label="#" width="55" align="center" />
         <el-table-column prop="username" label="用户名" min-width="130" show-overflow-tooltip />
@@ -62,31 +43,11 @@
             }}</el-tag></template
           >
         </el-table-column>
-        <el-table-column label="操作" width="330" fixed="right" align="center">
-          <template #default="{ row }">
-            <el-button v-perm="'sys:user:update'" link type="primary" @click="openEdit(row)">编辑</el-button>
-            <el-button v-perm="'sys:user:assign'" link type="primary" @click="openRoles(row)">角色</el-button>
-            <el-button v-perm="'sys:user:assign'" link type="primary" @click="openOwners(row)">数据范围</el-button>
-            <el-button v-perm="'sys:user:update'" link type="warning" @click="openResetPwd(row)">重置密码</el-button>
-            <el-button v-perm="'sys:user:delete'" link type="danger" @click="handleDelete(row)">删除</el-button>
-          </template>
+        <el-table-column label="操作" width="190" fixed="right" align="center">
+          <template #default="{ row }"><RowActions :actions="rowActions(row)" /></template>
         </el-table-column>
       </el-table>
-      <el-pagination
-        background
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="filtered.length"
-        :current-page="page.current"
-        :page-size="page.size"
-        :page-sizes="[10, 20, 50]"
-        @current-change="(v) => (page.current = v)"
-        @size-change="
-          (v) => {
-            page.size = v
-            page.current = 1
-          }
-        "
-      />
+      <ListPagination v-model:current="page.current" v-model:size="page.size" :total="filtered.length" />
     </el-card>
 
     <!-- 新增/编辑 -->
@@ -184,7 +145,12 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { ElMessage } from 'element-plus'
-import { Plus, Search, Refresh } from '@element-plus/icons-vue'
+import { Plus } from '@element-plus/icons-vue'
+import PageHeader from '@/components/list-page/PageHeader.vue'
+import SearchPanel from '@/components/list-page/SearchPanel.vue'
+import TableToolbar from '@/components/list-page/TableToolbar.vue'
+import ListPagination from '@/components/list-page/ListPagination.vue'
+import RowActions from '@/components/RowActions.vue'
 import { userApi, roleApi } from '@/api'
 import { useLocalPage } from '@/composables/useLocalPage'
 import { useDialogForm } from '@/composables/useDialogForm'
@@ -221,11 +187,7 @@ const loadData = async () => {
     loading.value = false
   }
 }
-const resetSearch = () => {
-  search.keyword = ''
-  search.status = ''
-  page.current = 1
-}
+const resetSearch = () => Object.assign(search, { keyword: '', status: '' })
 
 const { dialog, formRef, form, submitting, resetForm, openCreate, openEdit, handleSubmit } = useDialogForm({
   defaultForm: () => ({ id: null, username: '', password: '', realName: '', phone: '', status: 1 }),
@@ -348,6 +310,15 @@ const submitResetPwd = async () => {
     pwdDialog.submitting = false
   }
 }
+
+// 行操作：溢出时危险操作收进「更多」
+const rowActions = (row) => [
+  { label: '编辑', perm: 'sys:user:update', onClick: () => openEdit(row) },
+  { label: '角色', perm: 'sys:user:assign', onClick: () => openRoles(row) },
+  { label: '数据范围', perm: 'sys:user:assign', onClick: () => openOwners(row) },
+  { label: '重置密码', perm: 'sys:user:update', danger: true, type: 'warning', onClick: () => openResetPwd(row) },
+  { label: '删除', perm: 'sys:user:delete', danger: true, onClick: () => handleDelete(row) }
+]
 
 onMounted(loadData)
 </script>
