@@ -1,19 +1,10 @@
 <template>
   <div class="page-container">
-    <div class="page-header">
-      <div class="header-title">
-        <h2>入库管理</h2>
-        <p class="page-subtitle">入库单全流程：草稿 → 审核 → 完成入库（驱动库存增加并写流水）</p>
-      </div>
-      <div class="header-actions">
-        <el-button @click="loadData(true)"
-          ><el-icon><Refresh /></el-icon> 刷新</el-button
-        >
-        <el-button v-perm="'sys:inbound:add'" type="primary" @click="openCreate"
-          ><el-icon><Plus /></el-icon> 新增入库单</el-button
-        >
-      </div>
-    </div>
+    <PageHeader subtitle="入库单全流程：草稿 → 审核 → 完成入库（驱动库存增加并写流水）">
+      <template #actions>
+        <el-button v-perm="'sys:inbound:add'" type="primary" :icon="Plus" @click="openCreate">新增入库单</el-button>
+      </template>
+    </PageHeader>
 
     <el-row :gutter="16" class="stats-row">
       <el-col :span="6"
@@ -50,46 +41,33 @@
       >
     </el-row>
 
-    <el-card class="search-card">
-      <el-form :model="search" label-position="top" @submit.prevent>
-        <el-row :gutter="16">
-          <el-col :span="6"
-            ><el-form-item label="入库单号"
-              ><el-input v-model="search.keyword" placeholder="单号 / 供应商" clearable /></el-form-item
-          ></el-col>
-          <el-col :span="5"
-            ><el-form-item label="仓库"
-              ><el-select v-model="search.warehouseId" placeholder="全部" clearable style="width: 100%">
-                <el-option
-                  v-for="w in warehouses"
-                  :key="w.id"
-                  :label="w.warehouseName"
-                  :value="w.id" /></el-select></el-form-item
-          ></el-col>
-          <el-col :span="5"
-            ><el-form-item label="状态"
-              ><el-select v-model="search.status" placeholder="全部" clearable style="width: 100%">
-                <el-option
-                  v-for="(v, k) in INBOUND_STATUS"
-                  :key="k"
-                  :label="v.label"
-                  :value="k" /></el-select></el-form-item
-          ></el-col>
-          <el-col :span="8"
-            ><el-form-item label=" "
-              ><el-button type="primary" @click="page.current = 1"
-                ><el-icon><Search /></el-icon>查询</el-button
-              >
-              <el-button @click="resetSearch"
-                ><el-icon><Refresh /></el-icon>重置</el-button
-              ></el-form-item
-            ></el-col
-          >
-        </el-row>
-      </el-form>
-    </el-card>
+    <SearchPanel :model="search" :show-search="false" :action-span="8" @reset="resetSearch">
+      <el-col :span="6"
+        ><el-form-item label="入库单号"
+          ><el-input v-model="search.keyword" placeholder="单号 / 供应商" clearable /></el-form-item
+      ></el-col>
+      <el-col :span="5"
+        ><el-form-item label="仓库"
+          ><el-select v-model="search.warehouseId" placeholder="全部" clearable style="width: 100%">
+            <el-option
+              v-for="w in warehouses"
+              :key="w.id"
+              :label="w.warehouseName"
+              :value="w.id" /></el-select></el-form-item
+      ></el-col>
+      <el-col :span="5"
+        ><el-form-item label="状态"
+          ><el-select v-model="search.status" placeholder="全部" clearable style="width: 100%">
+            <el-option
+              v-for="(v, k) in INBOUND_STATUS"
+              :key="k"
+              :label="v.label"
+              :value="k" /></el-select></el-form-item
+      ></el-col>
+    </SearchPanel>
 
     <el-card class="table-card">
+      <TableToolbar :loading="loading" @refresh="loadData(true)" />
       <el-table v-loading="loading" :data="pagedList" stripe border>
         <el-table-column type="index" label="#" width="55" align="center" fixed="left" />
         <el-table-column prop="inboundCode" label="入库单号" min-width="160" fixed="left" show-overflow-tooltip />
@@ -120,67 +98,11 @@
           ><template #default="{ row }">{{ formatDateTime(row.createTime) }}</template></el-table-column
         >
         <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip />
-        <el-table-column label="操作" width="300" fixed="right" align="center">
-          <template #default="{ row }">
-            <el-button link type="primary" @click="openDetail(row)">明细</el-button>
-            <el-button
-              v-if="row.status === 'DRAFT'"
-              v-perm="'sys:inbound:update'"
-              link
-              type="primary"
-              @click="openEdit(row)"
-              >编辑</el-button
-            >
-            <el-button
-              v-if="row.status === 'DRAFT'"
-              v-perm="'sys:inbound:status'"
-              link
-              type="success"
-              @click="changeStatus(row, 'AUDITED', '审核')"
-              >审核</el-button
-            >
-            <el-button
-              v-if="row.status === 'AUDITED'"
-              v-perm="'sys:inbound:complete'"
-              link
-              type="success"
-              @click="handleComplete(row)"
-              >完成入库</el-button
-            >
-            <el-button
-              v-if="canCancel(row.status)"
-              v-perm="'sys:inbound:status'"
-              link
-              type="warning"
-              @click="changeStatus(row, 'CANCELLED', '取消')"
-              >取消</el-button
-            >
-            <el-button
-              v-if="row.status === 'DRAFT'"
-              v-perm="'sys:inbound:delete'"
-              link
-              type="danger"
-              @click="handleDelete(row)"
-              >删除</el-button
-            >
-          </template>
+        <el-table-column label="操作" width="190" fixed="right" align="center">
+          <template #default="{ row }"><RowActions :actions="rowActions(row)" /></template>
         </el-table-column>
       </el-table>
-      <el-pagination
-        background
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="filtered.length"
-        :current-page="page.current"
-        :page-size="page.size"
-        :page-sizes="[10, 20, 50]"
-        @current-change="(v) => (page.current = v)"
-        @size-change="
-          (v) => {
-            page.size = v
-            page.current = 1
-          }
-        "
-      />
+      <ListPagination v-model:current="page.current" v-model:size="page.size" :total="filtered.length" />
     </el-card>
 
     <!-- 新增/编辑单头 -->
@@ -347,7 +269,12 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import { Plus, Search, Refresh } from '@element-plus/icons-vue'
+import { Plus } from '@element-plus/icons-vue'
+import PageHeader from '@/components/list-page/PageHeader.vue'
+import SearchPanel from '@/components/list-page/SearchPanel.vue'
+import TableToolbar from '@/components/list-page/TableToolbar.vue'
+import ListPagination from '@/components/list-page/ListPagination.vue'
+import RowActions from '@/components/RowActions.vue'
 import { inboundApi, inboundDetailApi } from '@/api'
 import { useLocalPage } from '@/composables/useLocalPage'
 import { useDialogForm } from '@/composables/useDialogForm'
@@ -394,10 +321,7 @@ const loadData = async (force = false) => {
     loading.value = false
   }
 }
-const resetSearch = () => {
-  Object.assign(search, { keyword: '', warehouseId: '', status: '' })
-  page.current = 1
-}
+const resetSearch = () => Object.assign(search, { keyword: '', warehouseId: '', status: '' })
 
 // 单头表单
 const genCode = () =>
@@ -462,6 +386,38 @@ const handleDelete = (row) =>
     onSuccess: () => loadData()
   })
 
+// 行操作按优先级排列：状态推进 > 编辑；溢出时危险操作收进「更多」
+const rowActions = (row) => {
+  const draft = row.status === 'DRAFT'
+  return [
+    { label: '明细', onClick: () => openDetail(row) },
+    {
+      label: '审核',
+      show: draft,
+      perm: 'sys:inbound:status',
+      type: 'success',
+      onClick: () => changeStatus(row, 'AUDITED', '审核')
+    },
+    {
+      label: '完成入库',
+      show: row.status === 'AUDITED',
+      perm: 'sys:inbound:complete',
+      type: 'success',
+      onClick: () => handleComplete(row)
+    },
+    { label: '编辑', show: draft, perm: 'sys:inbound:update', onClick: () => openEdit(row) },
+    {
+      label: '取消',
+      show: canCancel(row.status),
+      perm: 'sys:inbound:status',
+      danger: true,
+      type: 'warning',
+      onClick: () => changeStatus(row, 'CANCELLED', '取消')
+    },
+    { label: '删除', show: draft, perm: 'sys:inbound:delete', danger: true, onClick: () => handleDelete(row) }
+  ]
+}
+
 // 明细表单
 const {
   dialog: detailForm,
@@ -518,19 +474,3 @@ const deleteDetail = (row) =>
 
 onMounted(() => loadData())
 </script>
-
-<style scoped>
-.detail-head {
-  margin-bottom: 18px;
-}
-.detail-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-.detail-title {
-  font-weight: 600;
-  color: var(--brand-secondary);
-}
-</style>
