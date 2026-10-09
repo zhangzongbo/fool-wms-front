@@ -112,6 +112,9 @@
         <el-table-column label="已盘/明细" width="110" align="right"
           ><template #default="{ row }">{{ row.countedCount }} / {{ row.itemCount }}</template></el-table-column
         >
+        <el-table-column label="创建人" min-width="100" show-overflow-tooltip
+          ><template #default="{ row }">{{ row.createByName || '-' }}</template></el-table-column
+        >
         <el-table-column label="创建时间" width="160" align="center"
           ><template #default="{ row }">{{ formatDateTime(row.createTime) }}</template></el-table-column
         >
@@ -245,6 +248,7 @@
           <el-descriptions-item label="盘点类型">{{
             optionLabel(CHECK_TYPE, detail.order.checkType)
           }}</el-descriptions-item>
+          <el-descriptions-item label="创建人">{{ detail.order.createByName || '-' }}</el-descriptions-item>
           <el-descriptions-item label="创建时间">{{ formatDateTime(detail.order.createTime) }}</el-descriptions-item>
         </el-descriptions>
       </div>

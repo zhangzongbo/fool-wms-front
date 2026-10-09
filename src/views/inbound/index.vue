@@ -113,6 +113,9 @@
         <el-table-column label="明细" width="110" align="right"
           ><template #default="{ row }">{{ row.itemCount }} 项 / {{ row.totalQuantity }}</template></el-table-column
         >
+        <el-table-column label="创建人" min-width="100" show-overflow-tooltip
+          ><template #default="{ row }">{{ row.createByName || '-' }}</template></el-table-column
+        >
         <el-table-column label="创建时间" width="160" align="center"
           ><template #default="{ row }">{{ formatDateTime(row.createTime) }}</template></el-table-column
         >
@@ -234,6 +237,7 @@
           <el-descriptions-item label="仓库">{{ warehouseName(detail.order.warehouseId) }}</el-descriptions-item>
           <el-descriptions-item label="货主">{{ ownerName(detail.order.ownerId) }}</el-descriptions-item>
           <el-descriptions-item label="供应商">{{ detail.order.supplierName || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="创建人">{{ detail.order.createByName || '-' }}</el-descriptions-item>
           <el-descriptions-item label="创建时间">{{ formatDateTime(detail.order.createTime) }}</el-descriptions-item>
         </el-descriptions>
       </div>
