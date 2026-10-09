@@ -182,6 +182,21 @@
   gap: var(--wms-space-sm);
 }
 
+/* 窄屏：左侧（状态页签 / 汇总）可收缩，页签超出时由 Element Plus 显示左右滚动箭头；右侧按钮组不收缩、不被挤出 */
+.table-toolbar .toolbar-left {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.table-toolbar .toolbar-left > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.table-toolbar .toolbar-actions {
+  flex: 0 0 auto;
+}
+
 /* 行操作「更多」中的危险项（下拉菜单挂载在 body，需全局样式） */
 .el-dropdown-menu__item.row-action-danger {
   color: var(--el-color-danger);
