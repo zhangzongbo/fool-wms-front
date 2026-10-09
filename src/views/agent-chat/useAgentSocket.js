@@ -91,9 +91,10 @@ export const parseFrame = (raw) => {
  * @param {import('vue').Ref<Array>} options.messages 消息列表
  * @param {import('vue').Ref<string>} options.userId 用户 id
  * @param {import('vue').Ref<boolean>} options.returnThought 是否返回思考过程
+ * @param {import('vue').Ref<string>} options.authToken 可选 auth token
  * @param {Function} [options.onUpdate] 消息有变化时回调（页面用于滚动到底部）
  */
-export function useAgentSocket({ messages, userId, returnThought, onUpdate = () => {} }) {
+export function useAgentSocket({ messages, userId, returnThought, authToken, onUpdate = () => {} }) {
   // 会话 id：首轮不传，由服务端自动分配（纯数字），后续轮次复用
   const sessionId = ref('')
   // 连接状态：idle / connecting / streaming / error
@@ -215,6 +216,10 @@ export function useAgentSocket({ messages, userId, returnThought, onUpdate = () 
       prompt,
       userId: userId.value,
       returnThought: returnThought.value
+    }
+    // 仅当填写了 auth token 时才携带（可为空）
+    if (authToken.value.trim()) {
+      payload.token = authToken.value.trim()
     }
     // 仅当已有服务端分配的会话 id 时才传递（首轮由服务端自动分配）
     if (sessionId.value) {
