@@ -118,7 +118,7 @@
           <template #header
             ><div class="panel-header">
               <span>近期入库单</span
-              ><el-link type="primary" :underline="false" @click="go('/inbound')">查看全部</el-link>
+              ><el-link type="primary" underline="never" @click="go('/inbound')">查看全部</el-link>
             </div></template
           >
           <el-table :data="recentInbound" size="small">
@@ -140,7 +140,7 @@
           <template #header
             ><div class="panel-header">
               <span>近期出库单</span
-              ><el-link type="primary" :underline="false" @click="go('/outbound')">查看全部</el-link>
+              ><el-link type="primary" underline="never" @click="go('/outbound')">查看全部</el-link>
             </div></template
           >
           <el-table :data="recentOutbound" size="small">

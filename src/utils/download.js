@@ -74,15 +74,20 @@ export async function downloadFile(url, { method = 'post', data, params, timeout
 
 /**
  * 获取 PDF 并在新标签页打开（浏览器预览自带打印）
- * 新窗口须在用户点击时同步打开，否则会被拦截；请求失败时关闭该窗口
+ * 新窗口须在用户点击时同步打开，否则会被拦截；请求失败时关闭该窗口；弹窗被拦截时改为下载
  */
-export async function openPdf(url, params) {
+export async function openPdf(url, params, fallbackName = 'document.pdf') {
   const win = window.open('', '_blank')
   try {
     const res = await fetchBlob(url, { method: 'get', params })
-    const href = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
-    if (win) win.location.href = href
-    else window.open(href, '_blank')
+    const blob = new Blob([res.data], { type: 'application/pdf' })
+    if (!win) {
+      ElMessage.warning('浏览器拦截了新窗口，已改为下载 PDF')
+      saveBlob(blob, parseFileName(res.headers?.['content-disposition']) || fallbackName)
+      return
+    }
+    const href = URL.createObjectURL(blob)
+    win.location.href = href
     setTimeout(() => URL.revokeObjectURL(href), 60000)
   } catch (e) {
     win?.close()

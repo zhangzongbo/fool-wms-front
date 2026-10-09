@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 
 vi.mock('@/utils/request', () => ({ default: vi.fn(), handleUnauthorized: vi.fn() }))
-vi.mock('element-plus', () => ({ ElMessage: { error: vi.fn() } }))
+vi.mock('element-plus', () => ({ ElMessage: { error: vi.fn(), warning: vi.fn() } }))
 
 import { parseFileName, readBlobError } from './download'
 

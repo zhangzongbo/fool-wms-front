@@ -235,7 +235,8 @@ const visibleActions = computed(() =>
   order.value ? actionsOf(order.value).filter((a) => a.show !== false && userStore.hasPermission(a.perm)) : []
 )
 
-const printPdf = (kind) => openPdf(pdfUrl(cfg.kind, id.value), { kind }).catch(() => {})
+const printPdf = (kind) =>
+  openPdf(pdfUrl(cfg.kind, id.value), { kind }, `${order.value[cfg.codeKey]}.pdf`).catch(() => {})
 const downloadPdf = () =>
   downloadFile(pdfUrl(cfg.kind, id.value), {
     method: 'get',

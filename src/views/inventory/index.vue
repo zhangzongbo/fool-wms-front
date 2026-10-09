@@ -27,6 +27,11 @@
 
     <el-card class="table-card">
       <TableToolbar :loading="loading" @refresh="loadData(true)">
+        <template #actions>
+          <el-button v-perm="'sys:inventory:export'" :icon="Download" :loading="exporting" @click="exportList"
+            >导出</el-button
+          >
+        </template>
         <template #left>
           <!-- 汇总由后端按相同筛选条件计算（summary），不受分页影响 -->
           <span class="list-summary">
@@ -90,14 +95,16 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { Download } from '@element-plus/icons-vue'
+import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import PageHeader from '@/components/list-page/PageHeader.vue'
 import SearchPanel from '@/components/list-page/SearchPanel.vue'
 import TableToolbar from '@/components/list-page/TableToolbar.vue'
 import ListPagination from '@/components/list-page/ListPagination.vue'
-import { inventoryApi } from '@/api'
+import { inventoryApi, EXPORT_URLS } from '@/api'
 import { useServerList } from '@/composables/useServerList'
+import { downloadFile } from '@/utils/download'
 import { dash, tableDash, formatQty, rowIndex } from '@/utils/format'
 import { useRefDataStore } from '@/stores/refData'
 
@@ -105,11 +112,14 @@ const refData = useRefDataStore()
 const { owners } = storeToRefs(refData)
 
 // 服务端分页；keyword 匹配商品编码 + 名称，batchNo 模糊匹配
-const { query, page, list, total, extra, loading, search, reset, reload } = useServerList((p) => inventoryApi.page(p), {
-  keyword: '',
-  ownerId: null,
-  batchNo: ''
-})
+const { query, page, list, total, extra, loading, search, reset, reload, currentParams } = useServerList(
+  (p) => inventoryApi.page(p),
+  {
+    keyword: '',
+    ownerId: null,
+    batchNo: ''
+  }
+)
 // 后端 summary 缺失时各项显示 "-"
 const summary = computed(() => extra.value.summary || {})
 
@@ -128,6 +138,19 @@ const ownerName = (id) => {
 // force：刷新按钮强制重拉参考数据
 const loadData = async (force = false) => {
   await Promise.all([reload(), refData.ensure(['owners'], { force })])
+}
+
+// 按当前筛选导出（服务端流式写出，上限与权限由后端控制）
+const exporting = ref(false)
+const exportList = async () => {
+  exporting.value = true
+  try {
+    await downloadFile(EXPORT_URLS.inventory, { data: currentParams(), fallbackName: '库存.xlsx' })
+  } catch (e) {
+    // 错误已提示
+  } finally {
+    exporting.value = false
+  }
 }
 
 onMounted(() => loadData())
