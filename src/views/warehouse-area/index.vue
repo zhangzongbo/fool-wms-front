@@ -1,57 +1,38 @@
 <template>
   <div class="page-container">
-    <div class="page-header">
-      <div class="header-title">
-        <h2>库区管理</h2>
-        <p class="page-subtitle">维护仓库下的功能库区划分（存储 / 拣货 / 收发货等）</p>
-      </div>
-      <div class="header-actions">
-        <el-button v-perm="'sys:area:add'" type="primary" @click="openCreate"
-          ><el-icon><Plus /></el-icon> 新增库区</el-button
-        >
-      </div>
-    </div>
+    <PageHeader subtitle="维护仓库下的功能库区划分（存储 / 拣货 / 收发货等）">
+      <template #actions>
+        <el-button v-perm="'sys:area:add'" type="primary" :icon="Plus" @click="openCreate">新增库区</el-button>
+      </template>
+    </PageHeader>
 
-    <el-card class="search-card">
-      <el-form :model="search" label-position="top" @submit.prevent>
-        <el-row :gutter="16">
-          <el-col :span="6"
-            ><el-form-item label="所属仓库"
-              ><el-select v-model="search.warehouseId" placeholder="全部仓库" clearable style="width: 100%">
-                <el-option
-                  v-for="w in warehouses"
-                  :key="w.id"
-                  :label="w.warehouseName"
-                  :value="w.id" /></el-select></el-form-item
-          ></el-col>
-          <el-col :span="6"
-            ><el-form-item label="库区名称/编码"
-              ><el-input v-model="search.keyword" placeholder="名称或编码" clearable /></el-form-item
-          ></el-col>
-          <el-col :span="5"
-            ><el-form-item label="库区类型"
-              ><el-select v-model="search.areaType" placeholder="全部" clearable style="width: 100%">
-                <el-option
-                  v-for="t in AREA_TYPE"
-                  :key="t.value"
-                  :label="t.label"
-                  :value="t.value" /></el-select></el-form-item
-          ></el-col>
-          <el-col :span="7"
-            ><el-form-item label=" "
-              ><el-button type="primary" @click="page.current = 1"
-                ><el-icon><Search /></el-icon>查询</el-button
-              >
-              <el-button @click="resetSearch"
-                ><el-icon><Refresh /></el-icon>重置</el-button
-              ></el-form-item
-            ></el-col
-          >
-        </el-row>
-      </el-form>
-    </el-card>
+    <SearchPanel :model="search" :show-search="false" :action-span="7" @reset="resetSearch">
+      <el-col :span="6"
+        ><el-form-item label="所属仓库"
+          ><el-select v-model="search.warehouseId" placeholder="全部仓库" clearable style="width: 100%">
+            <el-option
+              v-for="w in warehouses"
+              :key="w.id"
+              :label="w.warehouseName"
+              :value="w.id" /></el-select></el-form-item
+      ></el-col>
+      <el-col :span="6"
+        ><el-form-item label="库区名称/编码"
+          ><el-input v-model="search.keyword" placeholder="名称或编码" clearable /></el-form-item
+      ></el-col>
+      <el-col :span="5"
+        ><el-form-item label="库区类型"
+          ><el-select v-model="search.areaType" placeholder="全部" clearable style="width: 100%">
+            <el-option
+              v-for="t in AREA_TYPE"
+              :key="t.value"
+              :label="t.label"
+              :value="t.value" /></el-select></el-form-item
+      ></el-col>
+    </SearchPanel>
 
     <el-card class="table-card">
+      <TableToolbar :loading="loading" @refresh="loadData" />
       <el-table v-loading="loading" :data="pagedList" stripe border>
         <el-table-column type="index" label="#" width="55" align="center" />
         <el-table-column prop="areaCode" label="库区编码" min-width="130" show-overflow-tooltip />
@@ -65,28 +46,11 @@
           >
         </el-table-column>
         <el-table-column prop="areaDesc" label="描述" min-width="200" show-overflow-tooltip />
-        <el-table-column label="操作" width="160" fixed="right" align="center">
-          <template #default="{ row }">
-            <el-button v-perm="'sys:area:update'" link type="primary" @click="openEdit(row)">编辑</el-button>
-            <el-button v-perm="'sys:area:delete'" link type="danger" @click="handleDelete(row)">删除</el-button>
-          </template>
+        <el-table-column label="操作" width="130" fixed="right" align="center">
+          <template #default="{ row }"><RowActions :actions="rowActions(row)" /></template>
         </el-table-column>
       </el-table>
-      <el-pagination
-        background
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="filtered.length"
-        :current-page="page.current"
-        :page-size="page.size"
-        :page-sizes="[10, 20, 50]"
-        @current-change="(v) => (page.current = v)"
-        @size-change="
-          (v) => {
-            page.size = v
-            page.current = 1
-          }
-        "
-      />
+      <ListPagination v-model:current="page.current" v-model:size="page.size" :total="filtered.length" />
     </el-card>
 
     <el-dialog
@@ -123,7 +87,12 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import { Plus, Search, Refresh } from '@element-plus/icons-vue'
+import { Plus } from '@element-plus/icons-vue'
+import PageHeader from '@/components/list-page/PageHeader.vue'
+import SearchPanel from '@/components/list-page/SearchPanel.vue'
+import TableToolbar from '@/components/list-page/TableToolbar.vue'
+import ListPagination from '@/components/list-page/ListPagination.vue'
+import RowActions from '@/components/RowActions.vue'
 import { warehouseAreaApi } from '@/api'
 import { useLocalPage } from '@/composables/useLocalPage'
 import { useDialogForm } from '@/composables/useDialogForm'
@@ -160,12 +129,7 @@ const loadData = async () => {
     loading.value = false
   }
 }
-const resetSearch = () => {
-  search.warehouseId = ''
-  search.keyword = ''
-  search.areaType = ''
-  page.current = 1
-}
+const resetSearch = () => Object.assign(search, { warehouseId: '', keyword: '', areaType: '' })
 
 // 库区变更后，其他页面缓存的库区下拉需重新拉取
 const afterChange = () => {
@@ -191,6 +155,11 @@ const handleDelete = (row) =>
     successText: '删除成功',
     onSuccess: afterChange
   })
+
+const rowActions = (row) => [
+  { label: '编辑', perm: 'sys:area:update', onClick: () => openEdit(row) },
+  { label: '删除', perm: 'sys:area:delete', danger: true, onClick: () => handleDelete(row) }
+]
 
 onMounted(loadData)
 </script>

@@ -1,16 +1,6 @@
 <template>
   <div class="page-container">
-    <div class="page-header">
-      <div class="header-title">
-        <h2>库存查询</h2>
-        <p class="page-subtitle">按货主 / SKU / 批次 / 库位维度的实时库存，受数据范围隔离</p>
-      </div>
-      <div class="header-actions">
-        <el-button @click="loadData(true)"
-          ><el-icon><Refresh /></el-icon> 刷新</el-button
-        >
-      </div>
-    </div>
+    <PageHeader subtitle="按货主 / SKU / 批次 / 库位维度的实时库存，受数据范围隔离" />
 
     <el-row :gutter="16" class="stats-row">
       <el-col :span="6"
@@ -47,41 +37,23 @@
       >
     </el-row>
 
-    <el-card class="search-card">
-      <el-form :model="search" label-position="top" @submit.prevent>
-        <el-row :gutter="16">
-          <el-col :span="6"
-            ><el-form-item label="货主"
-              ><el-select v-model="search.ownerId" placeholder="全部货主" clearable style="width: 100%">
-                <el-option
-                  v-for="o in owners"
-                  :key="o.id"
-                  :label="o.ownerName"
-                  :value="o.id" /></el-select></el-form-item
-          ></el-col>
-          <el-col :span="6"
-            ><el-form-item label="商品编码/名称"
-              ><el-input v-model="search.keyword" placeholder="商品编码或名称" clearable /></el-form-item
-          ></el-col>
-          <el-col :span="5"
-            ><el-form-item label="批次号"
-              ><el-input v-model="search.batchNo" placeholder="批次号" clearable /></el-form-item
-          ></el-col>
-          <el-col :span="7"
-            ><el-form-item label=" ">
-              <el-button type="primary" @click="page.current = 1"
-                ><el-icon><Search /></el-icon>查询</el-button
-              >
-              <el-button @click="resetSearch"
-                ><el-icon><Refresh /></el-icon>重置</el-button
-              >
-            </el-form-item></el-col
-          >
-        </el-row>
-      </el-form>
-    </el-card>
+    <SearchPanel :model="search" :show-search="false" :action-span="7" @reset="resetSearch">
+      <el-col :span="6"
+        ><el-form-item label="货主"
+          ><el-select v-model="search.ownerId" placeholder="全部货主" clearable style="width: 100%">
+            <el-option v-for="o in owners" :key="o.id" :label="o.ownerName" :value="o.id" /></el-select></el-form-item
+      ></el-col>
+      <el-col :span="6"
+        ><el-form-item label="商品编码/名称"
+          ><el-input v-model="search.keyword" placeholder="商品编码或名称" clearable /></el-form-item
+      ></el-col>
+      <el-col :span="5"
+        ><el-form-item label="批次号"><el-input v-model="search.batchNo" placeholder="批次号" clearable /></el-form-item
+      ></el-col>
+    </SearchPanel>
 
     <el-card class="table-card">
+      <TableToolbar :loading="loading" @refresh="loadData(true)" />
       <el-table v-loading="loading" :data="pagedList" stripe border>
         <el-table-column type="index" label="#" width="55" align="center" />
         <el-table-column label="货主" min-width="140"
@@ -108,21 +80,7 @@
         </el-table-column>
         <el-table-column prop="unit" label="单位" width="70" align="center" />
       </el-table>
-      <el-pagination
-        background
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="filtered.length"
-        :current-page="page.current"
-        :page-size="page.size"
-        :page-sizes="[10, 20, 50]"
-        @current-change="(v) => (page.current = v)"
-        @size-change="
-          (v) => {
-            page.size = v
-            page.current = 1
-          }
-        "
-      />
+      <ListPagination v-model:current="page.current" v-model:size="page.size" :total="filtered.length" />
     </el-card>
   </div>
 </template>
@@ -130,7 +88,10 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import { Refresh, Search } from '@element-plus/icons-vue'
+import PageHeader from '@/components/list-page/PageHeader.vue'
+import SearchPanel from '@/components/list-page/SearchPanel.vue'
+import TableToolbar from '@/components/list-page/TableToolbar.vue'
+import ListPagination from '@/components/list-page/ListPagination.vue'
 import { inventoryApi } from '@/api'
 import { useLocalPage } from '@/composables/useLocalPage'
 import { settledValue } from '@/utils'
@@ -175,10 +136,7 @@ const loadData = async (force = false) => {
     loading.value = false
   }
 }
-const resetSearch = () => {
-  Object.assign(search, { ownerId: '', keyword: '', batchNo: '' })
-  page.current = 1
-}
+const resetSearch = () => Object.assign(search, { ownerId: '', keyword: '', batchNo: '' })
 
 onMounted(loadData)
 </script>

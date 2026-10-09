@@ -1,16 +1,10 @@
 <template>
   <div class="page-container">
-    <div class="page-header">
-      <div class="header-title">
-        <h2>货主管理</h2>
-        <p class="page-subtitle">3PL 多货主主数据，按当前账号数据范围展示</p>
-      </div>
-      <div class="header-actions">
-        <el-button v-perm="'sys:owner:add'" type="primary" @click="openCreate">
-          <el-icon><Plus /></el-icon> 新增货主
-        </el-button>
-      </div>
-    </div>
+    <PageHeader subtitle="3PL 多货主主数据，按当前账号数据范围展示">
+      <template #actions>
+        <el-button v-perm="'sys:owner:add'" type="primary" :icon="Plus" @click="openCreate">新增货主</el-button>
+      </template>
+    </PageHeader>
 
     <!-- 统计 -->
     <el-row :gutter="16" class="stats-row">
@@ -48,46 +42,25 @@
       >
     </el-row>
 
-    <el-card class="search-card">
-      <el-form :model="search" label-position="top" @submit.prevent>
-        <el-row :gutter="16">
-          <el-col :span="6"
-            ><el-form-item label="货主名称/编码"
-              ><el-input v-model="search.keyword" placeholder="名称或编码" clearable /></el-form-item
-          ></el-col>
-          <el-col :span="5"
-            ><el-form-item label="等级"
-              ><el-select v-model="search.ownerLevel" placeholder="全部" clearable style="width: 100%">
-                <el-option
-                  v-for="(v, k) in OWNER_LEVEL"
-                  :key="k"
-                  :label="v.label"
-                  :value="k" /></el-select></el-form-item
-          ></el-col>
-          <el-col :span="5"
-            ><el-form-item label="状态"
-              ><el-select v-model="search.status" placeholder="全部" clearable style="width: 100%">
-                <el-option
-                  v-for="(v, k) in OWNER_STATUS"
-                  :key="k"
-                  :label="v.label"
-                  :value="k" /></el-select></el-form-item
-          ></el-col>
-          <el-col :span="8"
-            ><el-form-item label=" "
-              ><el-button type="primary" @click="page.current = 1"
-                ><el-icon><Search /></el-icon>查询</el-button
-              >
-              <el-button @click="resetSearch"
-                ><el-icon><Refresh /></el-icon>重置</el-button
-              ></el-form-item
-            ></el-col
-          >
-        </el-row>
-      </el-form>
-    </el-card>
+    <SearchPanel :model="search" :show-search="false" :action-span="8" @reset="resetSearch">
+      <el-col :span="6"
+        ><el-form-item label="货主名称/编码"
+          ><el-input v-model="search.keyword" placeholder="名称或编码" clearable /></el-form-item
+      ></el-col>
+      <el-col :span="5"
+        ><el-form-item label="等级"
+          ><el-select v-model="search.ownerLevel" placeholder="全部" clearable style="width: 100%">
+            <el-option v-for="(v, k) in OWNER_LEVEL" :key="k" :label="v.label" :value="k" /></el-select></el-form-item
+      ></el-col>
+      <el-col :span="5"
+        ><el-form-item label="状态"
+          ><el-select v-model="search.status" placeholder="全部" clearable style="width: 100%">
+            <el-option v-for="(v, k) in OWNER_STATUS" :key="k" :label="v.label" :value="k" /></el-select></el-form-item
+      ></el-col>
+    </SearchPanel>
 
     <el-card class="table-card">
+      <TableToolbar :loading="loading" @refresh="loadData" />
       <el-table v-loading="loading" :data="pagedList" stripe border>
         <el-table-column type="index" label="#" width="55" align="center" />
         <el-table-column prop="ownerCode" label="货主编码" min-width="130" show-overflow-tooltip />
@@ -109,28 +82,11 @@
           >
         </el-table-column>
         <el-table-column prop="registerAddress" label="注册地址" min-width="200" show-overflow-tooltip />
-        <el-table-column label="操作" width="180" fixed="right" align="center">
-          <template #default="{ row }">
-            <el-button v-perm="'sys:owner:update'" link type="primary" @click="openEdit(row)">编辑</el-button>
-            <el-button v-perm="'sys:owner:delete'" link type="danger" @click="handleDelete(row)">删除</el-button>
-          </template>
+        <el-table-column label="操作" width="130" fixed="right" align="center">
+          <template #default="{ row }"><RowActions :actions="rowActions(row)" /></template>
         </el-table-column>
       </el-table>
-      <el-pagination
-        background
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="filtered.length"
-        :current-page="page.current"
-        :page-size="page.size"
-        :page-sizes="[10, 20, 50]"
-        @current-change="(v) => (page.current = v)"
-        @size-change="
-          (v) => {
-            page.size = v
-            page.current = 1
-          }
-        "
-      />
+      <ListPagination v-model:current="page.current" v-model:size="page.size" :total="filtered.length" />
     </el-card>
 
     <!-- 新增/编辑 -->
@@ -197,7 +153,12 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { Plus, Search, Refresh } from '@element-plus/icons-vue'
+import { Plus } from '@element-plus/icons-vue'
+import PageHeader from '@/components/list-page/PageHeader.vue'
+import SearchPanel from '@/components/list-page/SearchPanel.vue'
+import TableToolbar from '@/components/list-page/TableToolbar.vue'
+import ListPagination from '@/components/list-page/ListPagination.vue'
+import RowActions from '@/components/RowActions.vue'
 import { ownerApi } from '@/api'
 import { useLocalPage } from '@/composables/useLocalPage'
 import { useDialogForm } from '@/composables/useDialogForm'
@@ -232,12 +193,7 @@ const loadData = async () => {
     loading.value = false
   }
 }
-const resetSearch = () => {
-  search.keyword = ''
-  search.ownerLevel = ''
-  search.status = ''
-  page.current = 1
-}
+const resetSearch = () => Object.assign(search, { keyword: '', ownerLevel: '', status: '' })
 
 // 货主变更后，其他页面缓存的货主下拉需重新拉取
 const afterChange = () => {
@@ -274,6 +230,11 @@ const handleDelete = (row) =>
     successText: '删除成功',
     onSuccess: afterChange
   })
+
+const rowActions = (row) => [
+  { label: '编辑', perm: 'sys:owner:update', onClick: () => openEdit(row) },
+  { label: '删除', perm: 'sys:owner:delete', danger: true, onClick: () => handleDelete(row) }
+]
 
 onMounted(loadData)
 </script>

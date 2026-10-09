@@ -1,62 +1,43 @@
 <template>
   <div class="page-container">
-    <div class="page-header">
-      <div class="header-title">
-        <h2>库位管理</h2>
-        <p class="page-subtitle">最小存储单元，隶属于仓库与库区，支撑库存精确定位</p>
-      </div>
-      <div class="header-actions">
-        <el-button v-perm="'sys:location:add'" type="primary" @click="openCreate"
-          ><el-icon><Plus /></el-icon> 新增库位</el-button
-        >
-      </div>
-    </div>
+    <PageHeader subtitle="最小存储单元，隶属于仓库与库区，支撑库存精确定位">
+      <template #actions>
+        <el-button v-perm="'sys:location:add'" type="primary" :icon="Plus" @click="openCreate">新增库位</el-button>
+      </template>
+    </PageHeader>
 
-    <el-card class="search-card">
-      <el-form :model="search" label-position="top" @submit.prevent>
-        <el-row :gutter="16">
-          <el-col :span="5"
-            ><el-form-item label="所属仓库"
-              ><el-select v-model="search.warehouseId" placeholder="全部仓库" clearable style="width: 100%">
-                <el-option
-                  v-for="w in warehouses"
-                  :key="w.id"
-                  :label="w.warehouseName"
-                  :value="w.id" /></el-select></el-form-item
-          ></el-col>
-          <el-col :span="5"
-            ><el-form-item label="所属库区"
-              ><el-select v-model="search.areaId" placeholder="全部库区" clearable style="width: 100%">
-                <el-option v-for="a in areas" :key="a.id" :label="a.areaName" :value="a.id" /></el-select></el-form-item
-          ></el-col>
-          <el-col :span="5"
-            ><el-form-item label="库位名称/编码"
-              ><el-input v-model="search.keyword" placeholder="名称或编码" clearable /></el-form-item
-          ></el-col>
-          <el-col :span="4"
-            ><el-form-item label="库位类型"
-              ><el-select v-model="search.locationType" placeholder="全部" clearable style="width: 100%">
-                <el-option
-                  v-for="t in LOCATION_TYPE"
-                  :key="t.value"
-                  :label="t.label"
-                  :value="t.value" /></el-select></el-form-item
-          ></el-col>
-          <el-col :span="5"
-            ><el-form-item label=" "
-              ><el-button type="primary" @click="page.current = 1"
-                ><el-icon><Search /></el-icon>查询</el-button
-              >
-              <el-button @click="resetSearch"
-                ><el-icon><Refresh /></el-icon>重置</el-button
-              ></el-form-item
-            ></el-col
-          >
-        </el-row>
-      </el-form>
-    </el-card>
+    <SearchPanel :model="search" :show-search="false" :action-span="5" @reset="resetSearch">
+      <el-col :span="5"
+        ><el-form-item label="所属仓库"
+          ><el-select v-model="search.warehouseId" placeholder="全部仓库" clearable style="width: 100%">
+            <el-option
+              v-for="w in warehouses"
+              :key="w.id"
+              :label="w.warehouseName"
+              :value="w.id" /></el-select></el-form-item
+      ></el-col>
+      <el-col :span="5"
+        ><el-form-item label="所属库区"
+          ><el-select v-model="search.areaId" placeholder="全部库区" clearable style="width: 100%">
+            <el-option v-for="a in areas" :key="a.id" :label="a.areaName" :value="a.id" /></el-select></el-form-item
+      ></el-col>
+      <el-col :span="5"
+        ><el-form-item label="库位名称/编码"
+          ><el-input v-model="search.keyword" placeholder="名称或编码" clearable /></el-form-item
+      ></el-col>
+      <el-col :span="4"
+        ><el-form-item label="库位类型"
+          ><el-select v-model="search.locationType" placeholder="全部" clearable style="width: 100%">
+            <el-option
+              v-for="t in LOCATION_TYPE"
+              :key="t.value"
+              :label="t.label"
+              :value="t.value" /></el-select></el-form-item
+      ></el-col>
+    </SearchPanel>
 
     <el-card class="table-card">
+      <TableToolbar :loading="loading" @refresh="loadData" />
       <el-table v-loading="loading" :data="pagedList" stripe border>
         <el-table-column type="index" label="#" width="55" align="center" />
         <el-table-column prop="locationCode" label="库位编码" min-width="140" show-overflow-tooltip />
@@ -73,28 +54,11 @@
           >
         </el-table-column>
         <el-table-column prop="locationDesc" label="描述" min-width="180" show-overflow-tooltip />
-        <el-table-column label="操作" width="160" fixed="right" align="center">
-          <template #default="{ row }">
-            <el-button v-perm="'sys:location:update'" link type="primary" @click="openEdit(row)">编辑</el-button>
-            <el-button v-perm="'sys:location:delete'" link type="danger" @click="handleDelete(row)">删除</el-button>
-          </template>
+        <el-table-column label="操作" width="130" fixed="right" align="center">
+          <template #default="{ row }"><RowActions :actions="rowActions(row)" /></template>
         </el-table-column>
       </el-table>
-      <el-pagination
-        background
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="filtered.length"
-        :current-page="page.current"
-        :page-size="page.size"
-        :page-sizes="[10, 20, 50]"
-        @current-change="(v) => (page.current = v)"
-        @size-change="
-          (v) => {
-            page.size = v
-            page.current = 1
-          }
-        "
-      />
+      <ListPagination v-model:current="page.current" v-model:size="page.size" :total="filtered.length" />
     </el-card>
 
     <el-dialog
@@ -141,7 +105,12 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import { Plus, Search, Refresh } from '@element-plus/icons-vue'
+import { Plus } from '@element-plus/icons-vue'
+import PageHeader from '@/components/list-page/PageHeader.vue'
+import SearchPanel from '@/components/list-page/SearchPanel.vue'
+import TableToolbar from '@/components/list-page/TableToolbar.vue'
+import ListPagination from '@/components/list-page/ListPagination.vue'
+import RowActions from '@/components/RowActions.vue'
 import { locationApi } from '@/api'
 import { useLocalPage } from '@/composables/useLocalPage'
 import { useDialogForm } from '@/composables/useDialogForm'
@@ -179,10 +148,7 @@ const loadData = async () => {
     loading.value = false
   }
 }
-const resetSearch = () => {
-  Object.assign(search, { warehouseId: '', areaId: '', keyword: '', locationType: '' })
-  page.current = 1
-}
+const resetSearch = () => Object.assign(search, { warehouseId: '', areaId: '', keyword: '', locationType: '' })
 
 // 库位变更后，其他页面缓存的库位下拉需重新拉取
 const afterChange = () => {
@@ -221,6 +187,11 @@ const handleDelete = (row) =>
     successText: '删除成功',
     onSuccess: afterChange
   })
+
+const rowActions = (row) => [
+  { label: '编辑', perm: 'sys:location:update', onClick: () => openEdit(row) },
+  { label: '删除', perm: 'sys:location:delete', danger: true, onClick: () => handleDelete(row) }
+]
 
 onMounted(loadData)
 </script>
