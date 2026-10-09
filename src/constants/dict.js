@@ -96,15 +96,6 @@ export const LOCATION_TYPE = [
   { value: 'TEMP', label: '暂存位' }
 ]
 
-// 物料类型
-export const MATERIAL_TYPE = [
-  { value: 'RAW', label: '原材料' },
-  { value: 'SEMI', label: '半成品' },
-  { value: 'FINISHED', label: '成品' },
-  { value: 'PACKAGING', label: '包材' },
-  { value: 'CONSUMABLE', label: '耗材' }
-]
-
 // 权限类型
 export const PERM_TYPE = {
   MENU: { label: '菜单', type: 'primary' },

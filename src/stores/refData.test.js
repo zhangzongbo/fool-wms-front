@@ -65,4 +65,55 @@ describe('useRefDataStore', () => {
     await store.ensure(['owners'])
     expect(ownerApi.all).toHaveBeenCalledTimes(2)
   })
+
+  it('名称查不到时后台重拉一次，30 秒内不重复', async () => {
+    vi.useFakeTimers()
+    try {
+      const store = useRefDataStore()
+      await store.ensure(['owners'])
+      expect(store.ownerName(2)).toBe('-')
+      ownerApi.all.mockResolvedValue([
+        { id: 1, ownerName: '货主A' },
+        { id: 2, ownerName: '新货主' }
+      ])
+      await vi.runAllTicks()
+      await Promise.resolve()
+      await Promise.resolve()
+      expect(ownerApi.all).toHaveBeenCalledTimes(2)
+      expect(store.ownerName(2)).toBe('新货主')
+      store.ownerName(99)
+      store.ownerName(98)
+      await Promise.resolve()
+      expect(ownerApi.all).toHaveBeenCalledTimes(2) // 节流中
+      vi.advanceTimersByTime(31 * 1000)
+      store.ownerName(99)
+      await Promise.resolve()
+      expect(ownerApi.all).toHaveBeenCalledTimes(3)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('未加载过的数据查不到时不触发请求；空 id 不触发', async () => {
+    const store = useRefDataStore()
+    expect(store.warehouseName(5)).toBe('-')
+    expect(store.ownerName(null)).toBe('-')
+    await Promise.resolve()
+    expect(warehouseApi.getAllWarehouses).not.toHaveBeenCalled()
+    expect(ownerApi.all).not.toHaveBeenCalled()
+  })
+
+  it('refreshStale 只刷新超过 5 分钟未加载的数据', async () => {
+    vi.useFakeTimers()
+    try {
+      const store = useRefDataStore()
+      await store.ensure(['owners'])
+      vi.advanceTimersByTime(4 * 60 * 1000)
+      await store.ensure(['warehouses'])
+      vi.advanceTimersByTime(2 * 60 * 1000)
+      expect(store.refreshStale()).toEqual(['owners'])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })

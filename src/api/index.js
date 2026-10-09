@@ -19,7 +19,6 @@ export const dashboardApi = {
 export const ownerApi = {
   page: (data) => request({ url: '/owner/list', method: 'post', data }),
   all: () => request({ url: '/owner/all', method: 'get' }),
-  getById: (id) => request({ url: `/owner/${id}`, method: 'get' }),
   add: (data) => request({ url: '/owner/add', method: 'post', data }),
   update: (id, data) => request({ url: `/owner/${id}`, method: 'put', data }),
   delete: (id) => request({ url: `/owner/${id}`, method: 'delete' })
@@ -32,7 +31,6 @@ export const warehouseApi = {
   getWarehouseDetail: (id) => request({ url: `/warehouse/${id}`, method: 'get' }),
   createWarehouse: (data) => request({ url: '/warehouse/add', method: 'post', data }),
   updateWarehouse: (id, data) => request({ url: `/warehouse/${id}`, method: 'put', data }),
-  deleteWarehouse: (id) => request({ url: `/warehouse/${id}`, method: 'delete' }),
   enableWarehouse: (id) => request({ url: `/warehouse/${id}/enable`, method: 'put' }),
   disableWarehouse: (id) => request({ url: `/warehouse/${id}/disable`, method: 'put' })
 }
@@ -41,7 +39,6 @@ export const warehouseApi = {
 export const warehouseAreaApi = {
   page: (data) => request({ url: '/warehouse-area/list', method: 'post', data }),
   all: () => request({ url: '/warehouse-area/all', method: 'get' }),
-  getById: (id) => request({ url: `/warehouse-area/${id}`, method: 'get' }),
   add: (data) => request({ url: '/warehouse-area/add', method: 'post', data }),
   update: (id, data) => request({ url: `/warehouse-area/${id}`, method: 'put', data }),
   delete: (id) => request({ url: `/warehouse-area/${id}`, method: 'delete' })
@@ -51,12 +48,9 @@ export const warehouseAreaApi = {
 export const locationApi = {
   page: (data) => request({ url: '/location/list', method: 'post', data }),
   all: () => request({ url: '/location/all', method: 'get' }),
-  getById: (id) => request({ url: `/location/${id}`, method: 'get' }),
   add: (data) => request({ url: '/location/add', method: 'post', data }),
   update: (id, data) => request({ url: `/location/${id}`, method: 'put', data }),
-  delete: (id) => request({ url: `/location/${id}`, method: 'delete' }),
-  listByWarehouseAndArea: (warehouseId, areaId) =>
-    request({ url: '/location/list/by-warehouse-and-area', method: 'get', params: { warehouseId, areaId } })
+  delete: (id) => request({ url: `/location/${id}`, method: 'delete' })
 }
 
 // ============ 物料管理（兼容既有视图命名） ============
@@ -72,8 +66,7 @@ export const materialApi = {
 // ============ 库存管理 ============
 // 库存只读：变动只能由入库完成 / 出库分配·发货 / 盘点过账驱动，后端不提供直接写接口
 export const inventoryApi = {
-  page: (data) => request({ url: '/inventory/list', method: 'post', data }),
-  getById: (id) => request({ url: `/inventory/${id}`, method: 'get' })
+  page: (data) => request({ url: '/inventory/list', method: 'post', data })
 }
 
 // ============ 入库单 ============
@@ -85,19 +78,9 @@ export const inboundApi = {
   view: (id) => request({ url: `/inbound-order/${id}/view`, method: 'get' }),
   logs: (id) => request({ url: `/inbound-order/${id}/logs`, method: 'get' }),
   transactions: (id) => request({ url: `/inbound-order/${id}/transactions`, method: 'get' }),
-  getById: (id) => request({ url: `/inbound-order/${id}`, method: 'get' }),
-  add: (data) => request({ url: '/inbound-order/add', method: 'post', data }),
-  update: (id, data) => request({ url: `/inbound-order/${id}`, method: 'put', data }),
   delete: (id) => request({ url: `/inbound-order/${id}`, method: 'delete' }),
   changeStatus: (id, target) => request({ url: `/inbound-order/${id}/status`, method: 'post', params: { target } }),
   complete: (id) => request({ url: `/inbound-order/${id}/complete`, method: 'post' })
-}
-
-export const inboundDetailApi = {
-  list: (inboundId) => request({ url: '/inbound-order-detail/list', method: 'get', params: { inboundId } }),
-  add: (data) => request({ url: '/inbound-order-detail/add', method: 'post', data }),
-  update: (id, data) => request({ url: `/inbound-order-detail/${id}`, method: 'put', data }),
-  delete: (id) => request({ url: `/inbound-order-detail/${id}`, method: 'delete' })
 }
 
 // ============ 出库单 ============
@@ -109,21 +92,11 @@ export const outboundApi = {
   view: (id) => request({ url: `/outbound-order/${id}/view`, method: 'get' }),
   logs: (id) => request({ url: `/outbound-order/${id}/logs`, method: 'get' }),
   transactions: (id) => request({ url: `/outbound-order/${id}/transactions`, method: 'get' }),
-  getById: (id) => request({ url: `/outbound-order/${id}`, method: 'get' }),
-  add: (data) => request({ url: '/outbound-order/add', method: 'post', data }),
-  update: (id, data) => request({ url: `/outbound-order/${id}`, method: 'put', data }),
   delete: (id) => request({ url: `/outbound-order/${id}`, method: 'delete' }),
   changeStatus: (id, target) => request({ url: `/outbound-order/${id}/status`, method: 'post', params: { target } }),
   allocate: (id) => request({ url: `/outbound-order/${id}/allocate`, method: 'post' }),
   ship: (id) => request({ url: `/outbound-order/${id}/ship`, method: 'post' }),
   cancel: (id) => request({ url: `/outbound-order/${id}/cancel`, method: 'post' })
-}
-
-export const outboundDetailApi = {
-  list: (outboundId) => request({ url: '/outbound-order-detail/list', method: 'get', params: { outboundId } }),
-  add: (data) => request({ url: '/outbound-order-detail/add', method: 'post', data }),
-  update: (id, data) => request({ url: `/outbound-order-detail/${id}`, method: 'put', data }),
-  delete: (id) => request({ url: `/outbound-order-detail/${id}`, method: 'delete' })
 }
 
 // ============ 盘点单 ============
@@ -137,19 +110,9 @@ export const checkApi = {
   transactions: (id) => request({ url: `/inventory-check/${id}/transactions`, method: 'get' }),
   // 盘点中批量录入实盘量 / 备注
   saveCounts: (id, data) => request({ url: `/inventory-check/${id}/counts`, method: 'put', data }),
-  getById: (id) => request({ url: `/inventory-check/${id}`, method: 'get' }),
-  add: (data) => request({ url: '/inventory-check/add', method: 'post', data }),
-  update: (id, data) => request({ url: `/inventory-check/${id}`, method: 'put', data }),
   delete: (id) => request({ url: `/inventory-check/${id}`, method: 'delete' }),
   changeStatus: (id, target) => request({ url: `/inventory-check/${id}/status`, method: 'post', params: { target } }),
   post: (id) => request({ url: `/inventory-check/${id}/post`, method: 'post' })
-}
-
-export const checkDetailApi = {
-  list: (checkId) => request({ url: '/inventory-check-detail/list', method: 'get', params: { checkId } }),
-  add: (data) => request({ url: '/inventory-check-detail/add', method: 'post', data }),
-  update: (id, data) => request({ url: `/inventory-check-detail/${id}`, method: 'put', data }),
-  delete: (id) => request({ url: `/inventory-check-detail/${id}`, method: 'delete' })
 }
 
 // ============ 系统 - 用户 ============
