@@ -14,8 +14,7 @@
 <script setup>
 /**
  * 统一分页：v-model:current / v-model:size + total
- * - 前端分页（useLocalPage）：绑定 page.current / page.size 即可
- * - 服务端分页：额外监听 change 重新请求（v-model 已先行更新）
+ * - 配合 useServerList：v-model 绑定 page.current / page.size，@change="reload" 重新请求（v-model 已先行更新）
  * 改每页条数时回到第 1 页
  */
 defineProps({

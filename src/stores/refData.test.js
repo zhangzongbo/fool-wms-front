@@ -2,10 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 
 vi.mock('@/api', () => ({
-  ownerApi: { list: vi.fn() },
+  ownerApi: { all: vi.fn() },
   warehouseApi: { getAllWarehouses: vi.fn() },
-  warehouseAreaApi: { list: vi.fn() },
-  locationApi: { list: vi.fn() },
+  warehouseAreaApi: { all: vi.fn() },
+  locationApi: { all: vi.fn() },
   materialApi: { getAllMaterials: vi.fn() }
 }))
 import { ownerApi, warehouseApi, locationApi } from '@/api'
@@ -15,7 +15,7 @@ describe('useRefDataStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
-    ownerApi.list.mockResolvedValue([{ id: 1, ownerName: '货主A' }])
+    ownerApi.all.mockResolvedValue([{ id: 1, ownerName: '货主A' }])
     warehouseApi.getAllWarehouses.mockResolvedValue([{ id: 2, warehouseName: '仓库B' }])
   })
 
@@ -23,14 +23,14 @@ describe('useRefDataStore', () => {
     const store = useRefDataStore()
     await store.ensure(['owners', 'warehouses'])
     await store.ensure(['owners'])
-    expect(ownerApi.list).toHaveBeenCalledOnce()
+    expect(ownerApi.all).toHaveBeenCalledOnce()
     expect(store.ownerName(1)).toBe('货主A')
     expect(store.warehouseName(2)).toBe('仓库B')
     expect(store.ownerName(99)).toBe('-')
   })
 
   it('库位显示编码：空值为 -，缓存中不存在时显示 #id', async () => {
-    locationApi.list.mockResolvedValue([{ id: 7, locationCode: 'A-01-01' }])
+    locationApi.all.mockResolvedValue([{ id: 7, locationCode: 'A-01-01' }])
     const store = useRefDataStore()
     await store.ensure(['locations'])
     expect(store.locationCode(7)).toBe('A-01-01')
@@ -44,11 +44,11 @@ describe('useRefDataStore', () => {
     await store.ensure(['owners'], { force: true })
     store.invalidate('owners')
     await store.ensure(['owners'])
-    expect(ownerApi.list).toHaveBeenCalledTimes(3)
+    expect(ownerApi.all).toHaveBeenCalledTimes(3)
   })
 
   it('加载失败不影响其他项，且下次会重试', async () => {
-    ownerApi.list.mockRejectedValueOnce(new Error('500'))
+    ownerApi.all.mockRejectedValueOnce(new Error('500'))
     const store = useRefDataStore()
     const results = await store.ensure(['owners', 'warehouses'])
     expect(results.map((r) => r.status)).toEqual(['rejected', 'fulfilled'])
@@ -63,6 +63,6 @@ describe('useRefDataStore', () => {
     store.reset()
     expect(store.owners).toEqual([])
     await store.ensure(['owners'])
-    expect(ownerApi.list).toHaveBeenCalledTimes(2)
+    expect(ownerApi.all).toHaveBeenCalledTimes(2)
   })
 })

@@ -3,10 +3,11 @@ import { reactive, toRefs, computed } from 'vue'
 import { ownerApi, warehouseApi, warehouseAreaApi, locationApi, materialApi } from '@/api'
 
 const LOADERS = {
-  owners: () => ownerApi.list(),
+  // 均为 GET /all 全量接口；/owner/all 仅需登录，按数据范围返回
+  owners: () => ownerApi.all(),
   warehouses: () => warehouseApi.getAllWarehouses(),
-  areas: () => warehouseAreaApi.list(),
-  locations: () => locationApi.list(),
+  areas: () => warehouseAreaApi.all(),
+  locations: () => locationApi.all(),
   materials: () => materialApi.getAllMaterials()
 }
 

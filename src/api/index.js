@@ -1,5 +1,8 @@
 import request from '@/utils/request'
 
+// 列表约定：page(params) = POST /{资源}/list 分页（请求体 pageNum / pageSize / 筛选字段，返回 PageResult）；
+// all() = GET /{资源}/all 全量，供下拉等参考数据使用（见 stores/refData）
+
 // ============ 认证鉴权 ============
 export const authApi = {
   login: (data) => request({ url: '/auth/login', method: 'post', data }),
@@ -14,7 +17,8 @@ export const dashboardApi = {
 
 // ============ 货主管理 ============
 export const ownerApi = {
-  list: () => request({ url: '/owner/list', method: 'get' }),
+  page: (data) => request({ url: '/owner/list', method: 'post', data }),
+  all: () => request({ url: '/owner/all', method: 'get' }),
   getById: (id) => request({ url: `/owner/${id}`, method: 'get' }),
   add: (data) => request({ url: '/owner/add', method: 'post', data }),
   update: (id, data) => request({ url: `/owner/${id}`, method: 'put', data }),
@@ -35,7 +39,8 @@ export const warehouseApi = {
 
 // ============ 库区管理 ============
 export const warehouseAreaApi = {
-  list: () => request({ url: '/warehouse-area/list', method: 'get' }),
+  page: (data) => request({ url: '/warehouse-area/list', method: 'post', data }),
+  all: () => request({ url: '/warehouse-area/all', method: 'get' }),
   getById: (id) => request({ url: `/warehouse-area/${id}`, method: 'get' }),
   add: (data) => request({ url: '/warehouse-area/add', method: 'post', data }),
   update: (id, data) => request({ url: `/warehouse-area/${id}`, method: 'put', data }),
@@ -44,7 +49,8 @@ export const warehouseAreaApi = {
 
 // ============ 库位管理 ============
 export const locationApi = {
-  list: () => request({ url: '/location/list', method: 'get' }),
+  page: (data) => request({ url: '/location/list', method: 'post', data }),
+  all: () => request({ url: '/location/all', method: 'get' }),
   getById: (id) => request({ url: `/location/${id}`, method: 'get' }),
   add: (data) => request({ url: '/location/add', method: 'post', data }),
   update: (id, data) => request({ url: `/location/${id}`, method: 'put', data }),
@@ -66,13 +72,13 @@ export const materialApi = {
 // ============ 库存管理 ============
 // 库存只读：变动只能由入库完成 / 出库分配·发货 / 盘点过账驱动，后端不提供直接写接口
 export const inventoryApi = {
-  list: () => request({ url: '/inventory/list', method: 'get' }),
+  page: (data) => request({ url: '/inventory/list', method: 'post', data }),
   getById: (id) => request({ url: `/inventory/${id}`, method: 'get' })
 }
 
 // ============ 入库单 ============
 export const inboundApi = {
-  list: () => request({ url: '/inbound-order/list', method: 'get' }),
+  page: (data) => request({ url: '/inbound-order/list', method: 'post', data }),
   getById: (id) => request({ url: `/inbound-order/${id}`, method: 'get' }),
   add: (data) => request({ url: '/inbound-order/add', method: 'post', data }),
   update: (id, data) => request({ url: `/inbound-order/${id}`, method: 'put', data }),
@@ -90,7 +96,7 @@ export const inboundDetailApi = {
 
 // ============ 出库单 ============
 export const outboundApi = {
-  list: () => request({ url: '/outbound-order/list', method: 'get' }),
+  page: (data) => request({ url: '/outbound-order/list', method: 'post', data }),
   getById: (id) => request({ url: `/outbound-order/${id}`, method: 'get' }),
   add: (data) => request({ url: '/outbound-order/add', method: 'post', data }),
   update: (id, data) => request({ url: `/outbound-order/${id}`, method: 'put', data }),
@@ -110,7 +116,7 @@ export const outboundDetailApi = {
 
 // ============ 盘点单 ============
 export const checkApi = {
-  list: () => request({ url: '/inventory-check/list', method: 'get' }),
+  page: (data) => request({ url: '/inventory-check/list', method: 'post', data }),
   getById: (id) => request({ url: `/inventory-check/${id}`, method: 'get' }),
   add: (data) => request({ url: '/inventory-check/add', method: 'post', data }),
   update: (id, data) => request({ url: `/inventory-check/${id}`, method: 'put', data }),
@@ -128,7 +134,7 @@ export const checkDetailApi = {
 
 // ============ 系统 - 用户 ============
 export const userApi = {
-  list: () => request({ url: '/user/list', method: 'get' }),
+  page: (data) => request({ url: '/user/list', method: 'post', data }),
   add: (data) => request({ url: '/user/add', method: 'post', data }),
   update: (id, data) => request({ url: `/user/${id}`, method: 'put', data }),
   delete: (id) => request({ url: `/user/${id}`, method: 'delete' }),

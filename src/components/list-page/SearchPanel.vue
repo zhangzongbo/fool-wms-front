@@ -20,8 +20,8 @@ import { Search, Refresh } from '@element-plus/icons-vue'
 
 /**
  * 筛选区：默认插槽放 <el-col><el-form-item>…</el-form-item></el-col> 形式的筛选字段，按钮固定在行尾
- * - 服务端分页页：保留「查询」（回车同样触发 search）
- * - 前端过滤页（useLocalPage）：筛选即时生效，传 :show-search="false" 只保留「重置」
+ * - 列表均为服务端分页（useServerList）：关键字由「查询」或回车触发 search；下拉在字段上 @change 立即查询
+ * - :show-search="false" 只保留「重置」，用于没有关键字输入的筛选区
  */
 defineProps({
   model: { type: Object, required: true },

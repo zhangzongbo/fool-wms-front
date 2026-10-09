@@ -31,21 +31,34 @@ describe('useOrderDetail', () => {
     expect(detailList.value).toEqual([{ id: 'B' }])
   })
 
-  it('syncDetail：抽屉打开时替换为最新单头并重新加载', async () => {
+  it('syncDetail：抽屉打开时按 id 重新获取单头并重新加载明细', async () => {
     const list = vi.fn(() => Promise.resolve([]))
-    const { detail, openDetail, syncDetail } = useOrderDetail(list)
-    openDetail({ id: 10, status: 'DRAFT' })
-    syncDetail([{ id: 10, status: 'AUDITED' }])
-    expect(detail.order.status).toBe('AUDITED')
+    const getOrder = vi.fn(() => Promise.resolve({ id: 10, status: 'AUDITED' }))
+    const { detail, openDetail, syncDetail } = useOrderDetail(list, getOrder)
+    openDetail({ id: 10, status: 'DRAFT', itemCount: 3 })
+    await syncDetail()
+    expect(getOrder).toHaveBeenCalledWith(10)
+    expect(detail.order).toEqual({ id: 10, status: 'AUDITED', itemCount: 3 })
     expect(list).toHaveBeenCalledTimes(2)
   })
 
-  it('syncDetail：抽屉关闭时不做任何事', () => {
+  it('syncDetail：获取单头失败时保留原单头，仍刷新明细', async () => {
     const list = vi.fn(() => Promise.resolve([]))
-    const { detail, openDetail, syncDetail } = useOrderDetail(list)
+    const { detail, openDetail, syncDetail } = useOrderDetail(list, () => Promise.reject(new Error('500')))
+    openDetail({ id: 10, status: 'DRAFT' })
+    await syncDetail()
+    expect(detail.order.status).toBe('DRAFT')
+    expect(list).toHaveBeenCalledTimes(2)
+  })
+
+  it('syncDetail：抽屉关闭时不做任何事', async () => {
+    const list = vi.fn(() => Promise.resolve([]))
+    const getOrder = vi.fn()
+    const { detail, openDetail, syncDetail } = useOrderDetail(list, getOrder)
     openDetail({ id: 10 })
     detail.visible = false
-    syncDetail([{ id: 10, status: 'AUDITED' }])
+    await syncDetail()
+    expect(getOrder).not.toHaveBeenCalled()
     expect(list).toHaveBeenCalledTimes(1)
   })
 
