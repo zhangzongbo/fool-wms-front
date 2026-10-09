@@ -58,13 +58,12 @@
               <Expand v-else />
             </el-icon>
           </el-button>
-          <div class="header-breadcrumb">
-            <div class="page-title">{{ currentTitle }}</div>
-            <el-breadcrumb separator="/">
-              <el-breadcrumb-item :to="{ path: '/dashboard' }">首页</el-breadcrumb-item>
-              <el-breadcrumb-item>{{ currentTitle }}</el-breadcrumb-item>
-            </el-breadcrumb>
-          </div>
+          <!-- 页面标题由各页 PageHeader 展示，顶栏只负责导航 -->
+          <el-breadcrumb class="header-breadcrumb" separator="/">
+            <el-breadcrumb-item v-for="item in breadcrumb" :key="item.title" :to="item.to">{{
+              item.title
+            }}</el-breadcrumb-item>
+          </el-breadcrumb>
         </div>
 
         <div class="header-right">
@@ -113,6 +112,7 @@ import { useUserStore } from '@/stores/user'
 import { useAppStore } from '@/stores/app'
 import { Fold, Expand, ArrowDown, SwitchButton } from '@element-plus/icons-vue'
 import { MENU_GROUP_ICONS } from '@/router/menuGroups'
+import { resolveBreadcrumb } from '@/router/breadcrumb'
 
 const route = useRoute()
 const router = useRouter()
@@ -159,7 +159,7 @@ const resolveEnvironmentLabel = () => {
 const environmentLabel = ref(resolveEnvironmentLabel())
 
 const activeMenu = computed(() => route.path)
-const currentTitle = computed(() => route.meta?.title || '仪表盘')
+const breadcrumb = computed(() => resolveBreadcrumb(route))
 
 const toggleSidebar = () => {
   appStore.toggleSidebar()
@@ -309,14 +309,7 @@ const handleCommand = async (command) => {
   color: var(--brand-secondary);
 }
 .header-breadcrumb {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.page-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--brand-secondary);
+  font-size: 14px;
 }
 
 .header-right {

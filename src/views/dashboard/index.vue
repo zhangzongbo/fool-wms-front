@@ -1,16 +1,10 @@
 <template>
   <div class="page-container">
-    <div class="page-header">
-      <div class="header-title">
-        <h2>仪表盘</h2>
-        <p class="page-subtitle">仓储运营全景概览 · 实时数据</p>
-      </div>
-      <div class="header-actions">
-        <el-button :loading="loading" @click="loadData"
-          ><el-icon><Refresh /></el-icon> 刷新</el-button
-        >
-      </div>
-    </div>
+    <PageHeader subtitle="仓储运营全景概览 · 实时数据">
+      <template #actions>
+        <el-button :loading="loading" :icon="Refresh" @click="loadData">刷新</el-button>
+      </template>
+    </PageHeader>
 
     <!-- 统计卡片 -->
     <el-row :gutter="16" class="stats-row">
@@ -187,6 +181,7 @@ import {
   DocumentChecked
 } from '@element-plus/icons-vue'
 import { dashboardApi } from '@/api'
+import PageHeader from '@/components/list-page/PageHeader.vue'
 import { INBOUND_STATUS, OUTBOUND_STATUS, dictLabel, dictType } from '@/constants/dict'
 
 use([CanvasRenderer, BarChart, GridComponent, TooltipComponent, LegendComponent])
