@@ -7,11 +7,11 @@
     </PageHeader>
 
     <SearchPanel :model="query" :action-span="8" @search="search" @reset="reset">
-      <el-col :span="6"
+      <el-col :xs="24" :sm="12" :md="8" :lg="6"
         ><el-form-item label="盘点单号"
           ><el-input v-model="query.keyword" placeholder="盘点单号，回车查询" clearable /></el-form-item
       ></el-col>
-      <el-col :span="5"
+      <el-col :xs="24" :sm="12" :md="8" :lg="5"
         ><el-form-item label="仓库"
           ><el-select v-model="query.warehouseId" placeholder="全部" clearable style="width: 100%" @change="search">
             <el-option
@@ -20,7 +20,7 @@
               :label="w.warehouseName"
               :value="w.id" /></el-select></el-form-item
       ></el-col>
-      <el-col :span="5"
+      <el-col :xs="24" :sm="12" :md="8" :lg="5"
         ><el-form-item label="货主"
           ><el-select
             v-model="query.ownerId"
@@ -36,6 +36,7 @@
 
     <el-card class="table-card">
       <TableToolbar :loading="loading" @refresh="loadData(true)">
+        <template #settings><ColumnSettings :cols="cols" /></template>
         <template #actions>
           <el-button v-perm="'sys:check:export'" :icon="Download" :loading="exporting" @click="exportList"
             >导出</el-button
@@ -45,40 +46,110 @@
           <StatusTabs v-model="query.status" :options="CHECK_STATUS" :counts="extra.statusCounts" @change="search" />
         </template>
       </TableToolbar>
-      <el-table v-loading="loading" :data="list" stripe border>
-        <el-table-column type="index" :index="rowIndex(page)" label="#" width="60" align="center" fixed="left" />
-        <el-table-column label="盘点单号" min-width="170" fixed="left" show-overflow-tooltip>
+      <el-table v-loading="loading" :data="list" stripe border @header-dragend="cols.onDragEnd">
+        <el-table-column
+          column-key="index"
+          type="index"
+          :index="rowIndex(page)"
+          label="#"
+          :width="cols.width('index', 60)"
+          align="center"
+          fixed="left"
+        />
+        <el-table-column
+          column-key="code"
+          label="盘点单号"
+          min-width="170"
+          :width="cols.width('code')"
+          fixed="left"
+          show-overflow-tooltip
+        >
           <template #default="{ row }"
             ><el-link type="primary" underline="never" @click="goDetail(row)">{{ row.checkCode }}</el-link></template
           >
         </el-table-column>
-        <el-table-column label="状态" width="100" align="center" fixed="left">
+        <el-table-column
+          column-key="status"
+          label="状态"
+          :width="cols.width('status', 100)"
+          align="center"
+          fixed="left"
+        >
           <template #default="{ row }"
             ><el-tag :type="dictType(CHECK_STATUS, row.status)">{{
               dictLabel(CHECK_STATUS, row.status)
             }}</el-tag></template
           >
         </el-table-column>
-        <el-table-column label="货主" min-width="130" show-overflow-tooltip
+        <el-table-column
+          v-if="cols.visible('owner')"
+          column-key="owner"
+          label="货主"
+          min-width="130"
+          :width="cols.width('owner')"
+          show-overflow-tooltip
           ><template #default="{ row }">{{ ownerName(row.ownerId) }}</template></el-table-column
         >
-        <el-table-column label="仓库" min-width="150" show-overflow-tooltip
+        <el-table-column
+          v-if="cols.visible('warehouse')"
+          column-key="warehouse"
+          label="仓库"
+          min-width="150"
+          :width="cols.width('warehouse')"
+          show-overflow-tooltip
           ><template #default="{ row }">{{ warehouseName(row.warehouseId) }}</template></el-table-column
         >
-        <el-table-column label="盘点类型" width="110" align="center"
+        <el-table-column
+          v-if="cols.visible('type')"
+          column-key="type"
+          label="盘点类型"
+          :width="cols.width('type', 110)"
+          align="center"
           ><template #default="{ row }">{{ optionLabel(CHECK_TYPE, row.checkType) }}</template></el-table-column
         >
-        <el-table-column label="已盘/明细" width="110" align="right" class-name="num"
+        <el-table-column
+          v-if="cols.visible('progress')"
+          column-key="progress"
+          label="已盘/明细"
+          :width="cols.width('progress', 110)"
+          align="right"
+          class-name="num"
           ><template #default="{ row }">{{ row.countedCount }} / {{ row.itemCount }}</template></el-table-column
         >
-        <el-table-column label="创建人" min-width="100" show-overflow-tooltip
+        <el-table-column
+          v-if="cols.visible('creator')"
+          column-key="creator"
+          label="创建人"
+          min-width="100"
+          :width="cols.width('creator')"
+          show-overflow-tooltip
           ><template #default="{ row }">{{ dash(row.createByName) }}</template></el-table-column
         >
-        <el-table-column label="创建时间" width="160" align="center"
+        <el-table-column
+          v-if="cols.visible('createTime')"
+          column-key="createTime"
+          label="创建时间"
+          :width="cols.width('createTime', 160)"
+          align="center"
           ><template #default="{ row }">{{ formatDateTime(row.createTime) }}</template></el-table-column
         >
-        <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip :formatter="tableDash" />
-        <el-table-column label="操作" width="190" fixed="right" align="center">
+        <el-table-column
+          v-if="cols.visible('remark')"
+          column-key="remark"
+          prop="remark"
+          label="备注"
+          min-width="150"
+          :width="cols.width('remark')"
+          show-overflow-tooltip
+          :formatter="tableDash"
+        />
+        <el-table-column
+          column-key="action"
+          label="操作"
+          :width="cols.width('action', 190)"
+          fixed="right"
+          align="center"
+        >
           <template #default="{ row }"><RowActions :actions="rowActions(row)" /></template>
         </el-table-column>
       </el-table>
@@ -95,17 +166,34 @@ import { Plus, Download } from '@element-plus/icons-vue'
 import PageHeader from '@/components/list-page/PageHeader.vue'
 import SearchPanel from '@/components/list-page/SearchPanel.vue'
 import TableToolbar from '@/components/list-page/TableToolbar.vue'
+import ColumnSettings from '@/components/list-page/ColumnSettings.vue'
 import ListPagination from '@/components/list-page/ListPagination.vue'
 import StatusTabs from '@/components/list-page/StatusTabs.vue'
 import RowActions from '@/components/RowActions.vue'
 import { checkApi, EXPORT_URLS } from '@/api'
 import { useServerList } from '@/composables/useServerList'
+import { useTableColumns } from '@/composables/useTableColumns'
 import { downloadFile } from '@/utils/download'
 import { useOrderActions } from '@/composables/useOrderActions'
 import { formatDateTime } from '@/utils'
 import { dash, tableDash, rowIndex } from '@/utils/format'
 import { useRefDataStore } from '@/stores/refData'
 import { CHECK_STATUS, CHECK_TYPE, dictLabel, dictType, optionLabel } from '@/constants/dict'
+
+// 列设置（显示 / 隐藏、拖动列宽）：按用户记在本地；序号、编码、状态、操作为固定列不可隐藏；列定义变化时 version 加 1
+const cols = useTableColumns('check', [
+  { key: 'index', label: '序号', fixed: true },
+  { key: 'code', label: '盘点单号', fixed: true },
+  { key: 'status', label: '状态', fixed: true },
+  { key: 'owner', label: '货主' },
+  { key: 'warehouse', label: '仓库' },
+  { key: 'type', label: '盘点类型' },
+  { key: 'progress', label: '已盘 / 明细' },
+  { key: 'creator', label: '创建人' },
+  { key: 'createTime', label: '创建时间' },
+  { key: 'remark', label: '备注' },
+  { key: 'action', label: '操作', fixed: true }
+])
 
 const router = useRouter()
 const refData = useRefDataStore()

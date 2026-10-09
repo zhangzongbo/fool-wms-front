@@ -9,17 +9,17 @@
 
     <!-- 搜索筛选区域 -->
     <SearchPanel :model="query" :action-span="6" @search="search" @reset="reset">
-      <el-col :span="6">
+      <el-col :xs="24" :sm="12" :md="8" :lg="6">
         <el-form-item label="仓库名称">
           <el-input v-model="query.warehouseName" placeholder="请输入仓库名称，回车查询" clearable />
         </el-form-item>
       </el-col>
-      <el-col :span="6">
+      <el-col :xs="24" :sm="12" :md="8" :lg="6">
         <el-form-item label="仓库编码">
           <el-input v-model="query.warehouseCode" placeholder="请输入仓库编码，回车查询" clearable />
         </el-form-item>
       </el-col>
-      <el-col :span="6">
+      <el-col :xs="24" :sm="12" :md="8" :lg="6">
         <el-form-item label="状态">
           <el-select v-model="query.status" placeholder="全部" clearable style="width: 100%" @change="search">
             <el-option v-for="s in ENABLE_STATUS" :key="s.value" :label="s.label" :value="s.value" />
@@ -30,42 +30,94 @@
 
     <!-- 仓库列表 -->
     <el-card class="table-card">
-      <TableToolbar :loading="loading" @refresh="reload" />
-      <el-table v-loading="loading" :data="list" border stripe highlight-current-row>
-        <el-table-column type="index" :index="rowIndex(page)" label="#" width="60" align="center" />
+      <TableToolbar :loading="loading" @refresh="reload">
+        <template #settings><ColumnSettings :cols="cols" /></template>
+      </TableToolbar>
+      <el-table v-loading="loading" :data="list" border stripe highlight-current-row @header-dragend="cols.onDragEnd">
         <el-table-column
+          column-key="index"
+          type="index"
+          :index="rowIndex(page)"
+          label="#"
+          :width="cols.width('index', 60)"
+          align="center"
+        />
+        <el-table-column
+          column-key="code"
           prop="warehouseCode"
           label="仓库编码"
-          width="120"
+          :width="cols.width('code', 120)"
           show-overflow-tooltip
           :formatter="tableDash"
         />
         <el-table-column
+          v-if="cols.visible('name')"
+          column-key="name"
           prop="warehouseName"
           label="仓库名称"
-          width="150"
+          :width="cols.width('name', 150)"
           show-overflow-tooltip
           :formatter="tableDash"
         />
-        <el-table-column prop="province" label="省份" width="100" show-overflow-tooltip :formatter="tableDash" />
-        <el-table-column prop="city" label="城市" width="100" show-overflow-tooltip :formatter="tableDash" />
         <el-table-column
+          v-if="cols.visible('province')"
+          column-key="province"
+          prop="province"
+          label="省份"
+          :width="cols.width('province', 100)"
+          show-overflow-tooltip
+          :formatter="tableDash"
+        />
+        <el-table-column
+          v-if="cols.visible('city')"
+          column-key="city"
+          prop="city"
+          label="城市"
+          :width="cols.width('city', 100)"
+          show-overflow-tooltip
+          :formatter="tableDash"
+        />
+        <el-table-column
+          v-if="cols.visible('address')"
+          column-key="address"
           prop="warehouseAddress"
           label="仓库地址"
           min-width="200"
+          :width="cols.width('address')"
           show-overflow-tooltip
           :formatter="tableDash"
         />
-        <el-table-column prop="managerName" label="负责人" width="100" show-overflow-tooltip :formatter="tableDash" />
-        <el-table-column prop="managerPhone" label="联系电话" width="120" :formatter="tableDash" />
-        <el-table-column prop="status" label="状态" width="80">
+        <el-table-column
+          v-if="cols.visible('manager')"
+          column-key="manager"
+          prop="managerName"
+          label="负责人"
+          :width="cols.width('manager', 100)"
+          show-overflow-tooltip
+          :formatter="tableDash"
+        />
+        <el-table-column
+          v-if="cols.visible('phone')"
+          column-key="phone"
+          prop="managerPhone"
+          label="联系电话"
+          :width="cols.width('phone', 120)"
+          :formatter="tableDash"
+        />
+        <el-table-column column-key="status" prop="status" label="状态" :width="cols.width('status', 80)">
           <template #default="{ row }">
             <el-tag :type="statusOf(row.status).type">
               {{ statusOf(row.status).label }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="190" fixed="right" align="center">
+        <el-table-column
+          column-key="action"
+          label="操作"
+          :width="cols.width('action', 190)"
+          fixed="right"
+          align="center"
+        >
           <template #default="{ row }"><RowActions :actions="rowActions(row)" /></template>
         </el-table-column>
       </el-table>
@@ -194,14 +246,30 @@ import ProvinceSelect from '@/components/ProvinceSelect.vue'
 import PageHeader from '@/components/list-page/PageHeader.vue'
 import SearchPanel from '@/components/list-page/SearchPanel.vue'
 import TableToolbar from '@/components/list-page/TableToolbar.vue'
+import ColumnSettings from '@/components/list-page/ColumnSettings.vue'
 import ListPagination from '@/components/list-page/ListPagination.vue'
 import RowActions from '@/components/RowActions.vue'
 import { useServerList } from '@/composables/useServerList'
+import { useTableColumns } from '@/composables/useTableColumns'
 import { confirmAction } from '@/utils/confirm'
 import { formatDateTime } from '@/utils'
 import { dash, tableDash, rowIndex } from '@/utils/format'
 import { useRefDataStore } from '@/stores/refData'
 import { ENABLE_STATUS } from '@/constants/dict'
+
+// 列设置（显示 / 隐藏、拖动列宽）：按用户记在本地；序号、编码、状态、操作为固定列不可隐藏；列定义变化时 version 加 1
+const cols = useTableColumns('warehouse', [
+  { key: 'index', label: '序号', fixed: true },
+  { key: 'code', label: '仓库编码', fixed: true },
+  { key: 'name', label: '仓库名称' },
+  { key: 'province', label: '省份' },
+  { key: 'city', label: '城市' },
+  { key: 'address', label: '仓库地址' },
+  { key: 'manager', label: '负责人' },
+  { key: 'phone', label: '联系电话' },
+  { key: 'status', label: '状态', fixed: true },
+  { key: 'action', label: '操作', fixed: true }
+])
 
 // Generated by Copilot
 const refData = useRefDataStore()

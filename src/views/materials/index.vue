@@ -8,17 +8,17 @@
     </PageHeader>
 
     <SearchPanel :model="query" :action-span="6" @search="search" @reset="reset">
-      <el-col :span="6">
+      <el-col :xs="24" :sm="12" :md="8" :lg="6">
         <el-form-item label="物料名称">
           <el-input v-model="query.materialName" placeholder="请输入物料名称，回车查询" clearable />
         </el-form-item>
       </el-col>
-      <el-col :span="6">
+      <el-col :xs="24" :sm="12" :md="8" :lg="6">
         <el-form-item label="物料编码">
           <el-input v-model="query.materialCode" placeholder="请输入物料编码，回车查询" clearable />
         </el-form-item>
       </el-col>
-      <el-col :span="6">
+      <el-col :xs="24" :sm="12" :md="8" :lg="6">
         <el-form-item label="物料类型">
           <el-input v-model="query.materialType" placeholder="请输入物料类型，回车查询" clearable />
         </el-form-item>
@@ -26,50 +26,107 @@
     </SearchPanel>
 
     <el-card class="table-card">
-      <TableToolbar :loading="loading" @refresh="reload" />
+      <TableToolbar :loading="loading" @refresh="reload">
+        <template #settings><ColumnSettings :cols="cols" /></template>
+      </TableToolbar>
 
-      <el-table v-loading="loading" :data="list" border stripe highlight-current-row>
-        <el-table-column type="index" :index="rowIndex(page)" label="#" width="60" align="center" />
+      <el-table v-loading="loading" :data="list" border stripe highlight-current-row @header-dragend="cols.onDragEnd">
         <el-table-column
+          column-key="index"
+          type="index"
+          :index="rowIndex(page)"
+          label="#"
+          :width="cols.width('index', 60)"
+          align="center"
+        />
+        <el-table-column
+          column-key="code"
           prop="materialCode"
           label="物料编码"
-          width="140"
+          :width="cols.width('code', 140)"
           show-overflow-tooltip
           :formatter="tableDash"
         />
         <el-table-column
+          v-if="cols.visible('name')"
+          column-key="name"
           prop="materialName"
           label="物料名称"
-          width="160"
+          :width="cols.width('name', 160)"
           show-overflow-tooltip
           :formatter="tableDash"
         />
         <el-table-column
+          v-if="cols.visible('type')"
+          column-key="type"
           prop="materialType"
           label="物料类型"
-          width="120"
+          :width="cols.width('type', 120)"
           show-overflow-tooltip
           :formatter="tableDash"
         />
-        <el-table-column prop="unit" label="计量单位" width="100" :formatter="tableDash" />
-        <el-table-column prop="brand" label="品牌" width="120" show-overflow-tooltip :formatter="tableDash" />
-        <el-table-column prop="origin" label="产地" width="120" show-overflow-tooltip :formatter="tableDash" />
-        <el-table-column prop="barcode" label="条形码" width="160" show-overflow-tooltip :formatter="tableDash" />
         <el-table-column
+          v-if="cols.visible('unit')"
+          column-key="unit"
+          prop="unit"
+          label="计量单位"
+          :width="cols.width('unit', 100)"
+          :formatter="tableDash"
+        />
+        <el-table-column
+          v-if="cols.visible('brand')"
+          column-key="brand"
+          prop="brand"
+          label="品牌"
+          :width="cols.width('brand', 120)"
+          show-overflow-tooltip
+          :formatter="tableDash"
+        />
+        <el-table-column
+          v-if="cols.visible('origin')"
+          column-key="origin"
+          prop="origin"
+          label="产地"
+          :width="cols.width('origin', 120)"
+          show-overflow-tooltip
+          :formatter="tableDash"
+        />
+        <el-table-column
+          v-if="cols.visible('barcode')"
+          column-key="barcode"
+          prop="barcode"
+          label="条形码"
+          :width="cols.width('barcode', 160)"
+          show-overflow-tooltip
+          :formatter="tableDash"
+        />
+        <el-table-column
+          v-if="cols.visible('spec')"
+          column-key="spec"
           prop="specification"
           label="规格型号"
           min-width="160"
+          :width="cols.width('spec')"
           show-overflow-tooltip
           :formatter="tableDash"
         />
         <el-table-column
+          v-if="cols.visible('desc')"
+          column-key="desc"
           prop="materialDesc"
           label="物料描述"
           min-width="200"
+          :width="cols.width('desc')"
           show-overflow-tooltip
           :formatter="tableDash"
         />
-        <el-table-column label="操作" width="190" fixed="right" align="center">
+        <el-table-column
+          column-key="action"
+          label="操作"
+          :width="cols.width('action', 190)"
+          fixed="right"
+          align="center"
+        >
           <template #default="{ row }"><RowActions :actions="rowActions(row)" /></template>
         </el-table-column>
       </el-table>
@@ -167,12 +224,29 @@ import { materialApi } from '@/api'
 import PageHeader from '@/components/list-page/PageHeader.vue'
 import SearchPanel from '@/components/list-page/SearchPanel.vue'
 import TableToolbar from '@/components/list-page/TableToolbar.vue'
+import ColumnSettings from '@/components/list-page/ColumnSettings.vue'
 import ListPagination from '@/components/list-page/ListPagination.vue'
 import RowActions from '@/components/RowActions.vue'
 import { useServerList } from '@/composables/useServerList'
+import { useTableColumns } from '@/composables/useTableColumns'
 import { confirmAction } from '@/utils/confirm'
 import { dash, tableDash, rowIndex } from '@/utils/format'
 import { useRefDataStore } from '@/stores/refData'
+
+// 列设置（显示 / 隐藏、拖动列宽）：按用户记在本地；序号、编码、状态、操作为固定列不可隐藏；列定义变化时 version 加 1
+const cols = useTableColumns('materials', [
+  { key: 'index', label: '序号', fixed: true },
+  { key: 'code', label: '物料编码', fixed: true },
+  { key: 'name', label: '物料名称' },
+  { key: 'type', label: '物料类型' },
+  { key: 'unit', label: '计量单位' },
+  { key: 'brand', label: '品牌' },
+  { key: 'origin', label: '产地' },
+  { key: 'barcode', label: '条形码' },
+  { key: 'spec', label: '规格型号' },
+  { key: 'desc', label: '物料描述' },
+  { key: 'action', label: '操作', fixed: true }
+])
 
 const refData = useRefDataStore()
 

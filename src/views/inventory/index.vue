@@ -3,7 +3,7 @@
     <PageHeader subtitle="按货主 / SKU / 批次 / 库位维度的实时库存，受数据范围隔离" />
 
     <SearchPanel :model="query" :action-span="7" @search="search" @reset="reset">
-      <el-col :span="6"
+      <el-col :xs="24" :sm="12" :md="8" :lg="6"
         ><el-form-item label="货主"
           ><el-select
             v-model="query.ownerId"
@@ -15,11 +15,11 @@
           >
             <el-option v-for="o in owners" :key="o.id" :label="o.ownerName" :value="o.id" /></el-select></el-form-item
       ></el-col>
-      <el-col :span="6"
+      <el-col :xs="24" :sm="12" :md="8" :lg="6"
         ><el-form-item label="商品编码/名称"
           ><el-input v-model="query.keyword" placeholder="商品编码或名称，回车查询" clearable /></el-form-item
       ></el-col>
-      <el-col :span="5"
+      <el-col :xs="24" :sm="12" :md="8" :lg="5"
         ><el-form-item label="批次号"
           ><el-input v-model="query.batchNo" placeholder="批次号，回车查询" clearable /></el-form-item
       ></el-col>
@@ -27,6 +27,7 @@
 
     <el-card class="table-card">
       <TableToolbar :loading="loading" @refresh="loadData(true)">
+        <template #settings><ColumnSettings :cols="cols" /></template>
         <template #actions>
           <el-button v-perm="'sys:inventory:export'" :icon="Download" :loading="exporting" @click="exportList"
             >导出</el-button
@@ -43,51 +44,110 @@
           </span>
         </template>
       </TableToolbar>
-      <el-table v-loading="loading" :data="list" stripe border>
-        <el-table-column type="index" :index="rowIndex(page)" label="#" width="60" align="center" />
-        <el-table-column label="货主" min-width="140" show-overflow-tooltip
+      <el-table v-loading="loading" :data="list" stripe border @header-dragend="cols.onDragEnd">
+        <el-table-column
+          column-key="index"
+          type="index"
+          :index="rowIndex(page)"
+          label="#"
+          :width="cols.width('index', 60)"
+          align="center"
+        />
+        <el-table-column
+          v-if="cols.visible('owner')"
+          column-key="owner"
+          label="货主"
+          min-width="140"
+          :width="cols.width('owner')"
+          show-overflow-tooltip
           ><template #default="{ row }">{{ ownerName(row.ownerId) }}</template></el-table-column
         >
         <el-table-column
+          column-key="productCode"
           prop="productCode"
           label="商品编码"
           min-width="130"
+          :width="cols.width('productCode')"
           show-overflow-tooltip
           :formatter="tableDash"
         />
         <el-table-column
+          v-if="cols.visible('productName')"
+          column-key="productName"
           prop="productName"
           label="商品名称"
           min-width="160"
+          :width="cols.width('productName')"
           show-overflow-tooltip
           :formatter="tableDash"
         />
-        <el-table-column prop="batchNo" label="批次号" min-width="120" show-overflow-tooltip :formatter="tableDash" />
         <el-table-column
+          v-if="cols.visible('batchNo')"
+          column-key="batchNo"
+          prop="batchNo"
+          label="批次号"
+          min-width="120"
+          :width="cols.width('batchNo')"
+          show-overflow-tooltip
+          :formatter="tableDash"
+        />
+        <el-table-column
+          v-if="cols.visible('location')"
+          column-key="location"
           prop="locationCode"
           label="库位"
           min-width="110"
+          :width="cols.width('location')"
           show-overflow-tooltip
           :formatter="tableDash"
         />
-        <el-table-column label="在库量" width="110" align="right" class-name="num">
+        <el-table-column
+          v-if="cols.visible('onHand')"
+          column-key="onHand"
+          label="在库量"
+          :width="cols.width('onHand', 110)"
+          align="right"
+          class-name="num"
+        >
           <template #default="{ row }">{{ formatQty(onHand(row)) }}</template>
         </el-table-column>
-        <el-table-column label="冻结量" width="110" align="right" class-name="num">
+        <el-table-column
+          v-if="cols.visible('frozen')"
+          column-key="frozen"
+          label="冻结量"
+          :width="cols.width('frozen', 110)"
+          align="right"
+          class-name="num"
+        >
           <template #default="{ row }"
             ><span :class="{ 'text-warning': num(row.frozenQuantity) > 0 }">{{
               formatQty(row.frozenQuantity)
             }}</span></template
           >
         </el-table-column>
-        <el-table-column label="可用量" width="110" align="right" class-name="num">
+        <el-table-column
+          v-if="cols.visible('available')"
+          column-key="available"
+          label="可用量"
+          :width="cols.width('available', 110)"
+          align="right"
+          class-name="num"
+        >
           <template #default="{ row }"
             ><span :class="available(row) <= 0 ? 'text-danger' : 'text-success'">{{
               formatQty(available(row))
             }}</span></template
           >
         </el-table-column>
-        <el-table-column prop="unit" label="单位" width="70" align="center" :formatter="tableDash" />
+        <el-table-column
+          v-if="cols.visible('unit')"
+          column-key="unit"
+          prop="unit"
+          label="单位"
+          :width="cols.width('unit', 70)"
+          align="center"
+          :formatter="tableDash"
+        />
       </el-table>
       <ListPagination v-model:current="page.current" v-model:size="page.size" :total="total" @change="reload" />
     </el-card>
@@ -101,12 +161,28 @@ import { storeToRefs } from 'pinia'
 import PageHeader from '@/components/list-page/PageHeader.vue'
 import SearchPanel from '@/components/list-page/SearchPanel.vue'
 import TableToolbar from '@/components/list-page/TableToolbar.vue'
+import ColumnSettings from '@/components/list-page/ColumnSettings.vue'
 import ListPagination from '@/components/list-page/ListPagination.vue'
 import { inventoryApi, EXPORT_URLS } from '@/api'
 import { useServerList } from '@/composables/useServerList'
+import { useTableColumns } from '@/composables/useTableColumns'
 import { downloadFile } from '@/utils/download'
 import { dash, tableDash, formatQty, rowIndex } from '@/utils/format'
 import { useRefDataStore } from '@/stores/refData'
+
+// 列设置（显示 / 隐藏、拖动列宽）：按用户记在本地；序号、编码、状态、操作为固定列不可隐藏；列定义变化时 version 加 1
+const cols = useTableColumns('inventory', [
+  { key: 'index', label: '序号', fixed: true },
+  { key: 'owner', label: '货主' },
+  { key: 'productCode', label: '商品编码', fixed: true },
+  { key: 'productName', label: '商品名称' },
+  { key: 'batchNo', label: '批次号' },
+  { key: 'location', label: '库位' },
+  { key: 'onHand', label: '在库量' },
+  { key: 'frozen', label: '冻结量' },
+  { key: 'available', label: '可用量' },
+  { key: 'unit', label: '单位' }
+])
 
 const refData = useRefDataStore()
 const { owners } = storeToRefs(refData)

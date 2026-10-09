@@ -7,7 +7,7 @@
     </PageHeader>
 
     <SearchPanel :model="query" :action-span="5" @search="search" @reset="reset">
-      <el-col :span="5"
+      <el-col :xs="24" :sm="12" :md="8" :lg="5"
         ><el-form-item label="所属仓库"
           ><el-select
             v-model="query.warehouseId"
@@ -22,7 +22,7 @@
               :label="w.warehouseName"
               :value="w.id" /></el-select></el-form-item
       ></el-col>
-      <el-col :span="5"
+      <el-col :xs="24" :sm="12" :md="8" :lg="5"
         ><el-form-item label="所属库区"
           ><el-select v-model="query.areaId" placeholder="全部库区" clearable style="width: 100%" @change="search">
             <el-option
@@ -31,11 +31,11 @@
               :label="a.areaName"
               :value="a.id" /></el-select></el-form-item
       ></el-col>
-      <el-col :span="5"
+      <el-col :xs="24" :sm="12" :md="8" :lg="5"
         ><el-form-item label="库位名称/编码"
           ><el-input v-model="query.keyword" placeholder="名称或编码，回车查询" clearable /></el-form-item
       ></el-col>
-      <el-col :span="4"
+      <el-col :xs="24" :sm="12" :md="8" :lg="4"
         ><el-form-item label="库位类型"
           ><el-select v-model="query.locationType" placeholder="全部" clearable style="width: 100%" @change="search">
             <el-option

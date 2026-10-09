@@ -7,11 +7,11 @@
     </PageHeader>
 
     <SearchPanel :model="search" :show-search="false" :action-span="13" @reset="resetSearch">
-      <el-col :span="6"
+      <el-col :xs="24" :sm="12" :md="8" :lg="6"
         ><el-form-item label="权限编码/名称"
           ><el-input v-model="search.keyword" placeholder="编码或名称" clearable /></el-form-item
       ></el-col>
-      <el-col :span="5"
+      <el-col :xs="24" :sm="12" :md="8" :lg="5"
         ><el-form-item label="类型"
           ><el-select v-model="search.permType" placeholder="全部" clearable style="width: 100%">
             <el-option v-for="(v, k) in PERM_TYPE" :key="k" :label="v.label" :value="k" /></el-select></el-form-item
