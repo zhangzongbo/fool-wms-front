@@ -7,49 +7,75 @@
       </template>
     </PageHeader>
 
-    <SearchPanel :model="searchForm" :action-span="6" @search="handleSearch" @reset="handleReset">
+    <SearchPanel :model="query" :action-span="6" @search="search" @reset="reset">
       <el-col :span="6">
         <el-form-item label="物料名称">
-          <el-input v-model="searchForm.materialName" placeholder="请输入物料名称" clearable />
+          <el-input v-model="query.materialName" placeholder="请输入物料名称，回车查询" clearable />
         </el-form-item>
       </el-col>
       <el-col :span="6">
         <el-form-item label="物料编码">
-          <el-input v-model="searchForm.materialCode" placeholder="请输入物料编码" clearable />
+          <el-input v-model="query.materialCode" placeholder="请输入物料编码，回车查询" clearable />
         </el-form-item>
       </el-col>
       <el-col :span="6">
         <el-form-item label="物料类型">
-          <el-input v-model="searchForm.materialType" placeholder="请输入物料类型" clearable />
+          <el-input v-model="query.materialType" placeholder="请输入物料类型，回车查询" clearable />
         </el-form-item>
       </el-col>
     </SearchPanel>
 
     <el-card class="table-card">
-      <TableToolbar :loading="loading" @refresh="getMaterialList" />
+      <TableToolbar :loading="loading" @refresh="reload" />
 
-      <el-table v-loading="loading" :data="materialList" border stripe highlight-current-row>
-        <el-table-column prop="materialCode" label="物料编码" width="140" show-overflow-tooltip />
-        <el-table-column prop="materialName" label="物料名称" width="160" show-overflow-tooltip />
-        <el-table-column prop="materialType" label="物料类型" width="120" show-overflow-tooltip />
-        <el-table-column prop="unit" label="计量单位" width="100" />
-        <el-table-column prop="brand" label="品牌" width="120" show-overflow-tooltip />
-        <el-table-column prop="origin" label="产地" width="120" show-overflow-tooltip />
-        <el-table-column prop="barcode" label="条形码" width="160" show-overflow-tooltip />
-        <el-table-column prop="specification" label="规格型号" min-width="160" show-overflow-tooltip />
-        <el-table-column prop="materialDesc" label="物料描述" min-width="200" show-overflow-tooltip />
+      <el-table v-loading="loading" :data="list" border stripe highlight-current-row>
+        <el-table-column type="index" :index="rowIndex(page)" label="#" width="60" align="center" />
+        <el-table-column
+          prop="materialCode"
+          label="物料编码"
+          width="140"
+          show-overflow-tooltip
+          :formatter="tableDash"
+        />
+        <el-table-column
+          prop="materialName"
+          label="物料名称"
+          width="160"
+          show-overflow-tooltip
+          :formatter="tableDash"
+        />
+        <el-table-column
+          prop="materialType"
+          label="物料类型"
+          width="120"
+          show-overflow-tooltip
+          :formatter="tableDash"
+        />
+        <el-table-column prop="unit" label="计量单位" width="100" :formatter="tableDash" />
+        <el-table-column prop="brand" label="品牌" width="120" show-overflow-tooltip :formatter="tableDash" />
+        <el-table-column prop="origin" label="产地" width="120" show-overflow-tooltip :formatter="tableDash" />
+        <el-table-column prop="barcode" label="条形码" width="160" show-overflow-tooltip :formatter="tableDash" />
+        <el-table-column
+          prop="specification"
+          label="规格型号"
+          min-width="160"
+          show-overflow-tooltip
+          :formatter="tableDash"
+        />
+        <el-table-column
+          prop="materialDesc"
+          label="物料描述"
+          min-width="200"
+          show-overflow-tooltip
+          :formatter="tableDash"
+        />
         <el-table-column label="操作" width="190" fixed="right" align="center">
           <template #default="{ row }"><RowActions :actions="rowActions(row)" /></template>
         </el-table-column>
       </el-table>
 
       <!-- 分页：v-model 先更新页码 / 条数，change 时统一重新请求 -->
-      <ListPagination
-        v-model:current="pagination.currentPage"
-        v-model:size="pagination.pageSize"
-        :total="pagination.total"
-        @change="getMaterialList"
-      />
+      <ListPagination v-model:current="page.current" v-model:size="page.size" :total="total" @change="reload" />
     </el-card>
 
     <el-dialog v-model="showEditorDialog" :title="editingMaterial ? '编辑物料' : '新增物料'" width="700px">
@@ -118,15 +144,15 @@
 
     <el-drawer v-model="showDetailDrawer" title="物料详情" size="520px">
       <el-descriptions :column="1" border>
-        <el-descriptions-item label="物料编码">{{ currentMaterial.materialCode }}</el-descriptions-item>
-        <el-descriptions-item label="物料名称">{{ currentMaterial.materialName }}</el-descriptions-item>
-        <el-descriptions-item label="物料类型">{{ currentMaterial.materialType }}</el-descriptions-item>
-        <el-descriptions-item label="计量单位">{{ currentMaterial.unit }}</el-descriptions-item>
-        <el-descriptions-item label="品牌">{{ currentMaterial.brand || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="产地">{{ currentMaterial.origin || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="条形码">{{ currentMaterial.barcode || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="规格型号">{{ currentMaterial.specification || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="物料描述">{{ currentMaterial.materialDesc || '—' }}</el-descriptions-item>
+        <el-descriptions-item label="物料编码">{{ dash(currentMaterial.materialCode) }}</el-descriptions-item>
+        <el-descriptions-item label="物料名称">{{ dash(currentMaterial.materialName) }}</el-descriptions-item>
+        <el-descriptions-item label="物料类型">{{ dash(currentMaterial.materialType) }}</el-descriptions-item>
+        <el-descriptions-item label="计量单位">{{ dash(currentMaterial.unit) }}</el-descriptions-item>
+        <el-descriptions-item label="品牌">{{ dash(currentMaterial.brand) }}</el-descriptions-item>
+        <el-descriptions-item label="产地">{{ dash(currentMaterial.origin) }}</el-descriptions-item>
+        <el-descriptions-item label="条形码">{{ dash(currentMaterial.barcode) }}</el-descriptions-item>
+        <el-descriptions-item label="规格型号">{{ dash(currentMaterial.specification) }}</el-descriptions-item>
+        <el-descriptions-item label="物料描述">{{ dash(currentMaterial.materialDesc) }}</el-descriptions-item>
       </el-descriptions>
     </el-drawer>
   </div>
@@ -134,7 +160,7 @@
 
 <script setup>
 // Generated by Copilot
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { materialApi } from '@/api'
@@ -143,25 +169,18 @@ import SearchPanel from '@/components/list-page/SearchPanel.vue'
 import TableToolbar from '@/components/list-page/TableToolbar.vue'
 import ListPagination from '@/components/list-page/ListPagination.vue'
 import RowActions from '@/components/RowActions.vue'
+import { useServerList } from '@/composables/useServerList'
 import { confirmAction } from '@/utils/confirm'
+import { dash, tableDash, rowIndex } from '@/utils/format'
 import { useRefDataStore } from '@/stores/refData'
 
 const refData = useRefDataStore()
 
-const loading = ref(false)
-const materialList = ref([])
-
-const searchForm = reactive({
-  materialName: '',
-  materialCode: '',
-  materialType: ''
-})
-
-const pagination = reactive({
-  currentPage: 1,
-  pageSize: 10,
-  total: 0
-})
+// 服务端分页：后端返回 PageResult，筛选字段与 POST /material/list 请求体同名，空值不传
+const { query, page, list, total, loading, search, reset, reload } = useServerList(
+  (p) => materialApi.getMaterialList(p),
+  { materialName: '', materialCode: '', materialType: '' }
+)
 
 const materialFormRef = ref()
 const showEditorDialog = ref(false)
@@ -188,52 +207,6 @@ const materialRules = {
 
 const showDetailDrawer = ref(false)
 const currentMaterial = ref({})
-
-const sanitizedSearchParams = computed(() => {
-  return {
-    pageNum: pagination.currentPage,
-    pageSize: pagination.pageSize,
-    materialName: searchForm.materialName?.trim() || undefined,
-    materialCode: searchForm.materialCode?.trim() || undefined,
-    materialType: searchForm.materialType?.trim() || undefined
-  }
-})
-
-// 后端返回 PageResult：{ records, total, current, size }
-const getMaterialList = async () => {
-  try {
-    loading.value = true
-    const payload = { ...sanitizedSearchParams.value }
-    Object.keys(payload).forEach((key) => {
-      if (payload[key] === undefined) {
-        delete payload[key]
-      }
-    })
-
-    const page = await materialApi.getMaterialList(payload)
-    materialList.value = page?.records || []
-    pagination.total = Number(page?.total) || 0
-  } catch (error) {
-    console.error('获取物料列表失败:', error)
-    materialList.value = []
-    pagination.total = 0
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleSearch = () => {
-  pagination.currentPage = 1
-  getMaterialList()
-}
-
-const handleReset = () => {
-  Object.keys(searchForm).forEach((key) => {
-    searchForm[key] = ''
-  })
-  pagination.currentPage = 1
-  getMaterialList()
-}
 
 const handleCreate = () => {
   editingMaterial.value = null
@@ -275,7 +248,7 @@ const handleView = async (row) => {
 // 物料变更后，其他页面缓存的物料下拉需重新拉取
 const afterChange = () => {
   refData.invalidate('materials')
-  getMaterialList()
+  reload()
 }
 
 const handleDelete = (row) =>
@@ -336,7 +309,5 @@ const resetForm = () => {
   materialFormRef.value?.clearValidate()
 }
 
-onMounted(() => {
-  getMaterialList()
-})
+onMounted(reload)
 </script>

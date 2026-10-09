@@ -6,14 +6,14 @@
       </template>
     </PageHeader>
 
-    <SearchPanel :model="search" :show-search="false" :action-span="13" @reset="resetSearch">
+    <SearchPanel :model="query" :action-span="13" @search="search" @reset="reset">
       <el-col :span="6"
         ><el-form-item label="用户名/姓名"
-          ><el-input v-model="search.keyword" placeholder="用户名或姓名" clearable /></el-form-item
+          ><el-input v-model="query.keyword" placeholder="用户名或姓名，回车查询" clearable /></el-form-item
       ></el-col>
       <el-col :span="5"
         ><el-form-item label="状态"
-          ><el-select v-model="search.status" placeholder="全部" clearable style="width: 100%">
+          ><el-select v-model="query.status" placeholder="全部" clearable style="width: 100%" @change="search">
             <el-option
               v-for="s in ENABLE_STATUS"
               :key="s.value"
@@ -23,12 +23,12 @@
     </SearchPanel>
 
     <el-card class="table-card">
-      <TableToolbar :loading="loading" @refresh="loadData" />
-      <el-table v-loading="loading" :data="pagedList" stripe border>
-        <el-table-column type="index" label="#" width="55" align="center" />
+      <TableToolbar :loading="loading" @refresh="loadData(true)" />
+      <el-table v-loading="loading" :data="list" stripe border>
+        <el-table-column type="index" :index="rowIndex(page)" label="#" width="60" align="center" />
         <el-table-column prop="username" label="用户名" min-width="130" show-overflow-tooltip />
         <el-table-column prop="realName" label="姓名" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="phone" label="手机号" min-width="130" />
+        <el-table-column prop="phone" label="手机号" min-width="130" show-overflow-tooltip :formatter="tableDash" />
         <el-table-column label="数据范围" width="120" align="center">
           <template #default="{ row }"
             ><el-tag :type="dictType(DATA_SCOPE, row.dataScope)" effect="light">{{
@@ -47,7 +47,7 @@
           <template #default="{ row }"><RowActions :actions="rowActions(row)" /></template>
         </el-table-column>
       </el-table>
-      <ListPagination v-model:current="page.current" v-model:size="page.size" :total="filtered.length" />
+      <ListPagination v-model:current="page.current" v-model:size="page.size" :total="total" @change="reload" />
     </el-card>
 
     <!-- 新增/编辑 -->
@@ -142,7 +142,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
@@ -152,48 +152,42 @@ import TableToolbar from '@/components/list-page/TableToolbar.vue'
 import ListPagination from '@/components/list-page/ListPagination.vue'
 import RowActions from '@/components/RowActions.vue'
 import { userApi, roleApi } from '@/api'
-import { useLocalPage } from '@/composables/useLocalPage'
+import { useServerList } from '@/composables/useServerList'
 import { useDialogForm } from '@/composables/useDialogForm'
 import { confirmAction } from '@/utils/confirm'
-import { settledValue } from '@/utils'
+import { tableDash, rowIndex } from '@/utils/format'
 import { useRefDataStore } from '@/stores/refData'
 import { ENABLE_STATUS, DATA_SCOPE, dictLabel, dictType, optionLabel, optionType } from '@/constants/dict'
 
 const refData = useRefDataStore()
 const { owners } = storeToRefs(refData)
-const loading = ref(false)
-const rawList = ref([])
 const roles = ref([])
-const search = reactive({ keyword: '', status: '' })
 
-const filtered = computed(() =>
-  rawList.value.filter((u) => {
-    const kw = search.keyword.trim().toLowerCase()
-    const matchKw = !kw || `${u.username || ''}${u.realName || ''}`.toLowerCase().includes(kw)
-    const matchStatus = search.status === '' || u.status === search.status
-    return matchKw && matchStatus
-  })
-)
-const { page, pagedList } = useLocalPage(filtered, search)
+// 服务端分页：关键字匹配用户名 / 姓名；状态清空后为 undefined，由 useServerList 剔除空值，不再误过滤
+const { query, page, list, total, loading, search, reset, reload } = useServerList((p) => userApi.page(p), {
+  keyword: '',
+  status: null
+})
 
-const loadData = async () => {
-  loading.value = true
+// 角色列表不在参考数据缓存中，仍在本页加载；失败时保留旧值
+const loadRoles = async () => {
   try {
-    // 角色列表不在参考数据缓存中，仍在本页加载；货主走缓存，失败时保留旧值
-    const [users, rs] = await Promise.allSettled([userApi.list(), roleApi.list(), refData.ensure(['owners'])])
-    rawList.value = settledValue(users, rawList.value)
-    roles.value = settledValue(rs, roles.value)
-  } finally {
-    loading.value = false
+    roles.value = (await roleApi.list()) || []
+  } catch (e) {
+    // 错误提示已由请求拦截器处理
   }
 }
-const resetSearch = () => Object.assign(search, { keyword: '', status: '' })
+
+// force：刷新按钮强制重拉参考数据（货主下拉）
+const loadData = async (force = false) => {
+  await Promise.all([reload(), loadRoles(), refData.ensure(['owners'], { force })])
+}
 
 const { dialog, formRef, form, submitting, resetForm, openCreate, openEdit, handleSubmit } = useDialogForm({
   defaultForm: () => ({ id: null, username: '', password: '', realName: '', phone: '', status: 1 }),
   create: (f) => userApi.add(f),
   update: (f) => userApi.update(f.id, f),
-  onSuccess: loadData
+  onSuccess: reload
 })
 const rules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
@@ -206,7 +200,7 @@ const rules = {
 const handleDelete = (row) =>
   confirmAction(`确定删除用户「${row.username}」吗？`, () => userApi.delete(row.id), {
     successText: '删除成功',
-    onSuccess: loadData
+    onSuccess: reload
   })
 
 // 角色
@@ -275,7 +269,7 @@ const submitOwners = async () => {
     await userApi.assignOwners(ownerDialog.user.id, ownerDialog.dataScope, ownerIds)
     ElMessage.success('数据范围已保存')
     ownerDialog.visible = false
-    loadData()
+    reload()
   } finally {
     ownerDialog.submitting = false
   }
@@ -320,7 +314,7 @@ const rowActions = (row) => [
   { label: '删除', perm: 'sys:user:delete', danger: true, onClick: () => handleDelete(row) }
 ]
 
-onMounted(loadData)
+onMounted(() => loadData())
 </script>
 
 <style scoped>

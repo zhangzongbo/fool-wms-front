@@ -6,67 +6,43 @@
       </template>
     </PageHeader>
 
-    <!-- 统计 -->
-    <el-row :gutter="16" class="stats-row">
-      <el-col :span="6"
-        ><div class="stat-card">
-          <div class="stat-content">
-            <div class="stat-value">{{ rawList.length }}</div>
-            <div class="stat-label">货主总数</div>
-          </div>
-        </div></el-col
-      >
-      <el-col :span="6"
-        ><div class="stat-card success">
-          <div class="stat-content">
-            <div class="stat-value">{{ countBy('status', 'ENABLED') }}</div>
-            <div class="stat-label">合作中</div>
-          </div>
-        </div></el-col
-      >
-      <el-col :span="6"
-        ><div class="stat-card danger">
-          <div class="stat-content">
-            <div class="stat-value">{{ countBy('ownerLevel', 'VIP') }}</div>
-            <div class="stat-label">VIP 货主</div>
-          </div>
-        </div></el-col
-      >
-      <el-col :span="6"
-        ><div class="stat-card warning">
-          <div class="stat-content">
-            <div class="stat-value">{{ countBy('ownerLevel', 'TRIAL') }}</div>
-            <div class="stat-label">试用货主</div>
-          </div>
-        </div></el-col
-      >
-    </el-row>
-
-    <SearchPanel :model="search" :show-search="false" :action-span="8" @reset="resetSearch">
+    <SearchPanel :model="query" :action-span="8" @search="search" @reset="reset">
       <el-col :span="6"
         ><el-form-item label="货主名称/编码"
-          ><el-input v-model="search.keyword" placeholder="名称或编码" clearable /></el-form-item
+          ><el-input v-model="query.keyword" placeholder="名称或编码，回车查询" clearable /></el-form-item
       ></el-col>
       <el-col :span="5"
         ><el-form-item label="等级"
-          ><el-select v-model="search.ownerLevel" placeholder="全部" clearable style="width: 100%">
+          ><el-select v-model="query.ownerLevel" placeholder="全部" clearable style="width: 100%" @change="search">
             <el-option v-for="(v, k) in OWNER_LEVEL" :key="k" :label="v.label" :value="k" /></el-select></el-form-item
       ></el-col>
       <el-col :span="5"
         ><el-form-item label="状态"
-          ><el-select v-model="search.status" placeholder="全部" clearable style="width: 100%">
+          ><el-select v-model="query.status" placeholder="全部" clearable style="width: 100%" @change="search">
             <el-option v-for="(v, k) in OWNER_STATUS" :key="k" :label="v.label" :value="k" /></el-select></el-form-item
       ></el-col>
     </SearchPanel>
 
     <el-card class="table-card">
-      <TableToolbar :loading="loading" @refresh="loadData" />
-      <el-table v-loading="loading" :data="pagedList" stripe border>
-        <el-table-column type="index" label="#" width="55" align="center" />
+      <TableToolbar :loading="loading" @refresh="reload" />
+      <el-table v-loading="loading" :data="list" stripe border>
+        <el-table-column type="index" :index="rowIndex(page)" label="#" width="60" align="center" />
         <el-table-column prop="ownerCode" label="货主编码" min-width="130" show-overflow-tooltip />
         <el-table-column prop="ownerName" label="货主名称" min-width="180" show-overflow-tooltip />
-        <el-table-column prop="contactName" label="联系人" min-width="100" />
-        <el-table-column prop="contactPhone" label="联系电话" min-width="130" />
+        <el-table-column
+          prop="contactName"
+          label="联系人"
+          min-width="100"
+          show-overflow-tooltip
+          :formatter="tableDash"
+        />
+        <el-table-column
+          prop="contactPhone"
+          label="联系电话"
+          min-width="130"
+          show-overflow-tooltip
+          :formatter="tableDash"
+        />
         <el-table-column label="等级" width="100" align="center">
           <template #default="{ row }"
             ><el-tag :type="dictType(OWNER_LEVEL, row.ownerLevel)" effect="light">{{
@@ -81,12 +57,18 @@
             }}</el-tag></template
           >
         </el-table-column>
-        <el-table-column prop="registerAddress" label="注册地址" min-width="200" show-overflow-tooltip />
+        <el-table-column
+          prop="registerAddress"
+          label="注册地址"
+          min-width="200"
+          show-overflow-tooltip
+          :formatter="tableDash"
+        />
         <el-table-column label="操作" width="130" fixed="right" align="center">
           <template #default="{ row }"><RowActions :actions="rowActions(row)" /></template>
         </el-table-column>
       </el-table>
-      <ListPagination v-model:current="page.current" v-model:size="page.size" :total="filtered.length" />
+      <ListPagination v-model:current="page.current" v-model:size="page.size" :total="total" @change="reload" />
     </el-card>
 
     <!-- 新增/编辑 -->
@@ -152,7 +134,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
 import PageHeader from '@/components/list-page/PageHeader.vue'
 import SearchPanel from '@/components/list-page/SearchPanel.vue'
@@ -160,45 +142,25 @@ import TableToolbar from '@/components/list-page/TableToolbar.vue'
 import ListPagination from '@/components/list-page/ListPagination.vue'
 import RowActions from '@/components/RowActions.vue'
 import { ownerApi } from '@/api'
-import { useLocalPage } from '@/composables/useLocalPage'
+import { useServerList } from '@/composables/useServerList'
 import { useDialogForm } from '@/composables/useDialogForm'
 import { confirmAction } from '@/utils/confirm'
+import { tableDash, rowIndex } from '@/utils/format'
 import { useRefDataStore } from '@/stores/refData'
 import { OWNER_LEVEL, OWNER_STATUS, dictLabel, dictType } from '@/constants/dict'
 
 const refData = useRefDataStore()
-const loading = ref(false)
-const rawList = ref([])
-const search = reactive({ keyword: '', ownerLevel: '', status: '' })
-
-const filtered = computed(() =>
-  rawList.value.filter((o) => {
-    const kw = search.keyword.trim().toLowerCase()
-    const matchKw = !kw || `${o.ownerName || ''}${o.ownerCode || ''}`.toLowerCase().includes(kw)
-    const matchLevel = !search.ownerLevel || o.ownerLevel === search.ownerLevel
-    const matchStatus = !search.status || o.status === search.status
-    return matchKw && matchLevel && matchStatus
-  })
-)
-const { page, pagedList } = useLocalPage(filtered, search)
-const countBy = (key, val) => rawList.value.filter((o) => o[key] === val).length
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    rawList.value = (await ownerApi.list()) || []
-  } catch (e) {
-    // 错误提示已由请求拦截器处理
-  } finally {
-    loading.value = false
-  }
-}
-const resetSearch = () => Object.assign(search, { keyword: '', ownerLevel: '', status: '' })
+// 服务端分页；数据范围（可见货主）由后端按当前账号过滤
+const { query, page, list, total, loading, search, reset, reload } = useServerList((p) => ownerApi.page(p), {
+  keyword: '',
+  ownerLevel: null,
+  status: null
+})
 
 // 货主变更后，其他页面缓存的货主下拉需重新拉取
 const afterChange = () => {
   refData.invalidate('owners')
-  loadData()
+  reload()
 }
 
 const { dialog, formRef, form, submitting, resetForm, openCreate, openEdit, handleSubmit } = useDialogForm({
@@ -236,5 +198,5 @@ const rowActions = (row) => [
   { label: '删除', perm: 'sys:owner:delete', danger: true, onClick: () => handleDelete(row) }
 ]
 
-onMounted(loadData)
+onMounted(reload)
 </script>

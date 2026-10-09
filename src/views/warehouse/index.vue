@@ -8,20 +8,20 @@
     </PageHeader>
 
     <!-- 搜索筛选区域 -->
-    <SearchPanel :model="searchForm" :action-span="6" @search="handleSearch" @reset="handleReset">
+    <SearchPanel :model="query" :action-span="6" @search="search" @reset="reset">
       <el-col :span="6">
         <el-form-item label="仓库名称">
-          <el-input v-model="searchForm.name" placeholder="请输入仓库名称" clearable />
+          <el-input v-model="query.warehouseName" placeholder="请输入仓库名称，回车查询" clearable />
         </el-form-item>
       </el-col>
       <el-col :span="6">
         <el-form-item label="仓库编码">
-          <el-input v-model="searchForm.code" placeholder="请输入仓库编码" clearable />
+          <el-input v-model="query.warehouseCode" placeholder="请输入仓库编码，回车查询" clearable />
         </el-form-item>
       </el-col>
       <el-col :span="6">
         <el-form-item label="状态">
-          <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
+          <el-select v-model="query.status" placeholder="全部" clearable style="width: 100%" @change="search">
             <el-option v-for="s in ENABLE_STATUS" :key="s.value" :label="s.label" :value="s.value" />
           </el-select>
         </el-form-item>
@@ -30,15 +30,34 @@
 
     <!-- 仓库列表 -->
     <el-card class="table-card">
-      <TableToolbar :loading="loading" @refresh="getWarehouseList" />
-      <el-table v-loading="loading" :data="warehouseList" border stripe highlight-current-row>
-        <el-table-column prop="warehouseCode" label="仓库编码" width="120" />
-        <el-table-column prop="warehouseName" label="仓库名称" width="150" show-overflow-tooltip />
-        <el-table-column prop="province" label="省份" width="100" show-overflow-tooltip />
-        <el-table-column prop="city" label="城市" width="100" show-overflow-tooltip />
-        <el-table-column prop="warehouseAddress" label="仓库地址" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="managerName" label="负责人" width="100" />
-        <el-table-column prop="managerPhone" label="联系电话" width="120" />
+      <TableToolbar :loading="loading" @refresh="reload" />
+      <el-table v-loading="loading" :data="list" border stripe highlight-current-row>
+        <el-table-column type="index" :index="rowIndex(page)" label="#" width="60" align="center" />
+        <el-table-column
+          prop="warehouseCode"
+          label="仓库编码"
+          width="120"
+          show-overflow-tooltip
+          :formatter="tableDash"
+        />
+        <el-table-column
+          prop="warehouseName"
+          label="仓库名称"
+          width="150"
+          show-overflow-tooltip
+          :formatter="tableDash"
+        />
+        <el-table-column prop="province" label="省份" width="100" show-overflow-tooltip :formatter="tableDash" />
+        <el-table-column prop="city" label="城市" width="100" show-overflow-tooltip :formatter="tableDash" />
+        <el-table-column
+          prop="warehouseAddress"
+          label="仓库地址"
+          min-width="200"
+          show-overflow-tooltip
+          :formatter="tableDash"
+        />
+        <el-table-column prop="managerName" label="负责人" width="100" show-overflow-tooltip :formatter="tableDash" />
+        <el-table-column prop="managerPhone" label="联系电话" width="120" :formatter="tableDash" />
         <el-table-column prop="status" label="状态" width="80">
           <template #default="{ row }">
             <el-tag :type="statusOf(row.status).type">
@@ -52,12 +71,7 @@
       </el-table>
 
       <!-- 分页：v-model 先更新页码 / 条数，change 时统一重新请求 -->
-      <ListPagination
-        v-model:current="pagination.currentPage"
-        v-model:size="pagination.pageSize"
-        :total="pagination.total"
-        @change="getWarehouseList"
-      />
+      <ListPagination v-model:current="page.current" v-model:size="page.size" :total="total" @change="reload" />
     </el-card>
 
     <!-- 新增/编辑对话框 -->
@@ -143,24 +157,26 @@
     <!-- 详情对话框 -->
     <el-dialog v-model="showDetailDialog" title="仓库详情" width="800px">
       <el-descriptions :column="2" border>
-        <el-descriptions-item label="仓库编码">{{ currentWarehouse.warehouseCode }}</el-descriptions-item>
-        <el-descriptions-item label="仓库名称">{{ currentWarehouse.warehouseName }}</el-descriptions-item>
-        <el-descriptions-item label="负责人">{{ currentWarehouse.managerName }}</el-descriptions-item>
-        <el-descriptions-item label="联系电话">{{ currentWarehouse.managerPhone }}</el-descriptions-item>
-        <el-descriptions-item label="省份">{{ currentWarehouse.province }}</el-descriptions-item>
-        <el-descriptions-item label="城市">{{ currentWarehouse.city }}</el-descriptions-item>
-        <el-descriptions-item label="经度">{{ currentWarehouse.longitude }}</el-descriptions-item>
-        <el-descriptions-item label="纬度">{{ currentWarehouse.latitude }}</el-descriptions-item>
-        <el-descriptions-item label="仓库地址" :span="2">{{ currentWarehouse.warehouseAddress }}</el-descriptions-item>
+        <el-descriptions-item label="仓库编码">{{ dash(currentWarehouse.warehouseCode) }}</el-descriptions-item>
+        <el-descriptions-item label="仓库名称">{{ dash(currentWarehouse.warehouseName) }}</el-descriptions-item>
+        <el-descriptions-item label="负责人">{{ dash(currentWarehouse.managerName) }}</el-descriptions-item>
+        <el-descriptions-item label="联系电话">{{ dash(currentWarehouse.managerPhone) }}</el-descriptions-item>
+        <el-descriptions-item label="省份">{{ dash(currentWarehouse.province) }}</el-descriptions-item>
+        <el-descriptions-item label="城市">{{ dash(currentWarehouse.city) }}</el-descriptions-item>
+        <el-descriptions-item label="经度">{{ dash(currentWarehouse.longitude) }}</el-descriptions-item>
+        <el-descriptions-item label="纬度">{{ dash(currentWarehouse.latitude) }}</el-descriptions-item>
+        <el-descriptions-item label="仓库地址" :span="2">{{
+          dash(currentWarehouse.warehouseAddress)
+        }}</el-descriptions-item>
         <el-descriptions-item label="仓库描述" :span="2">{{
-          currentWarehouse.warehouseDesc || '暂无描述'
+          dash(currentWarehouse.warehouseDesc)
         }}</el-descriptions-item>
         <el-descriptions-item label="状态">
           <el-tag :type="statusOf(currentWarehouse.status).type">
             {{ statusOf(currentWarehouse.status).label }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="创建时间">{{ currentWarehouse.createTime }}</el-descriptions-item>
+        <el-descriptions-item label="创建时间">{{ formatDateTime(currentWarehouse.createTime) }}</el-descriptions-item>
       </el-descriptions>
       <template #footer>
         <el-button @click="showDetailDialog = false">关闭</el-button>
@@ -180,7 +196,10 @@ import SearchPanel from '@/components/list-page/SearchPanel.vue'
 import TableToolbar from '@/components/list-page/TableToolbar.vue'
 import ListPagination from '@/components/list-page/ListPagination.vue'
 import RowActions from '@/components/RowActions.vue'
+import { useServerList } from '@/composables/useServerList'
 import { confirmAction } from '@/utils/confirm'
+import { formatDateTime } from '@/utils'
+import { dash, tableDash, rowIndex } from '@/utils/format'
 import { useRefDataStore } from '@/stores/refData'
 import { ENABLE_STATUS } from '@/constants/dict'
 
@@ -190,24 +209,15 @@ const refData = useRefDataStore()
 const statusOf = (status) => ENABLE_STATUS.find((s) => s.value === (status === 1 ? 1 : 0))
 // 操作按钮文案：启用中显示“禁用”，否则显示“启用”
 const toggleLabel = (status) => statusOf(status === 1 ? 0 : 1).label
-const loading = ref(false)
 const showAddDialog = ref(false)
 const editingWarehouse = ref(null)
 const warehouseFormRef = ref()
 
-// 搜索表单
-const searchForm = reactive({
-  name: '',
-  code: '',
-  status: ''
-})
-
-// 分页信息
-const pagination = reactive({
-  currentPage: 1,
-  pageSize: 10,
-  total: 0
-})
+// 服务端分页：筛选字段与后端 POST /warehouse/list 请求体同名，空值不传
+const { query, page, list, total, loading, search, reset, reload } = useServerList(
+  (p) => warehouseApi.getWarehouseList(p),
+  { warehouseName: '', warehouseCode: '', status: null }
+)
 
 // 仓库表单
 const warehouseForm = reactive({
@@ -248,59 +258,6 @@ const warehouseRules = {
   ]
 }
 
-// 仓库列表
-const warehouseList = ref([])
-
-// 获取仓库列表
-const getWarehouseList = async () => {
-  try {
-    loading.value = true
-    const params = {
-      pageNum: pagination.currentPage,
-      pageSize: pagination.pageSize,
-      warehouseName: searchForm.name || undefined,
-      warehouseCode: searchForm.code || undefined,
-      status: searchForm.status !== '' ? searchForm.status : undefined
-    }
-
-    // 过滤掉 undefined 的参数
-    Object.keys(params).forEach((key) => {
-      if (params[key] === undefined) {
-        delete params[key]
-      }
-    })
-
-    const result = await warehouseApi.getWarehouseList(params)
-
-    if (result) {
-      warehouseList.value = result.records || result.data || result
-      pagination.total = result.total || result.length || 0
-    }
-  } catch (error) {
-    console.error('获取仓库列表失败:', error)
-    warehouseList.value = []
-    pagination.total = 0
-  } finally {
-    loading.value = false
-  }
-}
-
-// 搜索
-const handleSearch = () => {
-  // 重置到第一页
-  pagination.currentPage = 1
-  getWarehouseList()
-}
-
-// 重置搜索
-const handleReset = () => {
-  Object.keys(searchForm).forEach((key) => {
-    searchForm[key] = ''
-  })
-  pagination.currentPage = 1
-  getWarehouseList()
-}
-
 // 新增：先清空，避免残留上一次编辑的数据导致误更新旧仓库
 const openCreate = () => {
   resetForm()
@@ -338,7 +295,7 @@ const handleView = async (row) => {
 // 仓库变更后，其他页面缓存的仓库下拉需重新拉取
 const afterChange = () => {
   refData.invalidate('warehouses')
-  getWarehouseList()
+  reload()
 }
 
 // 状态变更：启用中则禁用，否则启用
@@ -416,7 +373,5 @@ const rowActions = (row) => [
   }
 ]
 
-onMounted(() => {
-  getWarehouseList()
-})
+onMounted(reload)
 </script>
