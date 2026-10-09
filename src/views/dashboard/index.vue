@@ -83,25 +83,25 @@
             ><div class="panel-header"><span>待办事项</span></div></template
           >
           <div class="todo-list">
-            <div class="todo-item" @click="go('/inbound')">
+            <div class="todo-item" @click="go('/inbound', 'AUDITED')">
               <div class="todo-left">
                 <el-icon color="#1765ad"><Download /></el-icon><span>入库单待完成</span>
               </div>
               <el-badge :value="todo.inbound" :max="99" type="primary" :show-zero="false" />
             </div>
-            <div class="todo-item" @click="go('/outbound')">
+            <div class="todo-item" @click="go('/outbound', 'AUDITED')">
               <div class="todo-left">
                 <el-icon color="#f59e0b"><Coordinate /></el-icon><span>出库单待分配</span>
               </div>
               <el-badge :value="todo.allocate" :max="99" type="warning" :show-zero="false" />
             </div>
-            <div class="todo-item" @click="go('/outbound')">
+            <div class="todo-item" @click="go('/outbound', 'ALLOCATED')">
               <div class="todo-left">
                 <el-icon color="#34a853"><Upload /></el-icon><span>出库单待发货</span>
               </div>
               <el-badge :value="todo.outbound" :max="99" type="success" :show-zero="false" />
             </div>
-            <div class="todo-item" @click="go('/check')">
+            <div class="todo-item" @click="go('/check', 'COUNTED')">
               <div class="todo-left">
                 <el-icon color="#f56c6c"><DocumentChecked /></el-icon><span>盘点单待过账</span>
               </div>
@@ -188,7 +188,8 @@ use([CanvasRenderer, BarChart, GridComponent, TooltipComponent, LegendComponent]
 
 const router = useRouter()
 const loading = ref(false)
-const go = (path) => router.push(path)
+// 待办跳转带上状态，列表页从 URL 恢复筛选（useServerList）
+const go = (path, status) => router.push(status ? { path, query: { status } } : path)
 
 // 后端按状态聚合的计数：{ status: count }
 const inbound = ref({})

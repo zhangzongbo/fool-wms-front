@@ -6,49 +6,14 @@
       </template>
     </PageHeader>
 
-    <el-row :gutter="16" class="stats-row">
-      <el-col :span="6"
-        ><div class="stat-card">
-          <div class="stat-content">
-            <div class="stat-value">{{ rawList.length }}</div>
-            <div class="stat-label">出库单总数</div>
-          </div>
-        </div></el-col
-      >
-      <el-col :span="6"
-        ><div class="stat-card warning">
-          <div class="stat-content">
-            <div class="stat-value">{{ countStatus('AUDITED') }}</div>
-            <div class="stat-label">待分配</div>
-          </div>
-        </div></el-col
-      >
-      <el-col :span="6"
-        ><div class="stat-card">
-          <div class="stat-content">
-            <div class="stat-value">{{ countStatus('ALLOCATED') }}</div>
-            <div class="stat-label">待发货</div>
-          </div>
-        </div></el-col
-      >
-      <el-col :span="6"
-        ><div class="stat-card success">
-          <div class="stat-content">
-            <div class="stat-value">{{ countStatus('SHIPPED') }}</div>
-            <div class="stat-label">已发货</div>
-          </div>
-        </div></el-col
-      >
-    </el-row>
-
-    <SearchPanel :model="search" :show-search="false" :action-span="8" @reset="resetSearch">
+    <SearchPanel :model="query" :action-span="8" @search="search" @reset="reset">
       <el-col :span="6"
         ><el-form-item label="出库单号"
-          ><el-input v-model="search.keyword" placeholder="单号 / 客户" clearable /></el-form-item
+          ><el-input v-model="query.keyword" placeholder="单号 / 客户，回车查询" clearable /></el-form-item
       ></el-col>
       <el-col :span="5"
         ><el-form-item label="仓库"
-          ><el-select v-model="search.warehouseId" placeholder="全部" clearable style="width: 100%">
+          ><el-select v-model="query.warehouseId" placeholder="全部" clearable style="width: 100%" @change="search">
             <el-option
               v-for="w in warehouses"
               :key="w.id"
@@ -56,20 +21,27 @@
               :value="w.id" /></el-select></el-form-item
       ></el-col>
       <el-col :span="5"
-        ><el-form-item label="状态"
-          ><el-select v-model="search.status" placeholder="全部" clearable style="width: 100%">
-            <el-option
-              v-for="(v, k) in OUTBOUND_STATUS"
-              :key="k"
-              :label="v.label"
-              :value="k" /></el-select></el-form-item
+        ><el-form-item label="货主"
+          ><el-select
+            v-model="query.ownerId"
+            placeholder="全部"
+            clearable
+            filterable
+            style="width: 100%"
+            @change="search"
+          >
+            <el-option v-for="o in owners" :key="o.id" :label="o.ownerName" :value="o.id" /></el-select></el-form-item
       ></el-col>
     </SearchPanel>
 
     <el-card class="table-card">
-      <TableToolbar :loading="loading" @refresh="loadData(true)" />
-      <el-table v-loading="loading" :data="pagedList" stripe border>
-        <el-table-column type="index" label="#" width="55" align="center" fixed="left" />
+      <TableToolbar :loading="loading" @refresh="loadData(true)">
+        <template #left>
+          <StatusTabs v-model="query.status" :options="OUTBOUND_STATUS" :counts="extra.statusCounts" @change="search" />
+        </template>
+      </TableToolbar>
+      <el-table v-loading="loading" :data="list" stripe border>
+        <el-table-column type="index" :index="rowIndex(page)" label="#" width="60" align="center" fixed="left" />
         <el-table-column prop="outboundCode" label="出库单号" min-width="160" fixed="left" show-overflow-tooltip />
         <el-table-column label="状态" width="100" align="center" fixed="left">
           <template #default="{ row }"
@@ -81,28 +53,36 @@
         <el-table-column label="货主" min-width="130" show-overflow-tooltip
           ><template #default="{ row }">{{ ownerName(row.ownerId) }}</template></el-table-column
         >
-        <el-table-column label="仓库" min-width="150"
+        <el-table-column label="仓库" min-width="150" show-overflow-tooltip
           ><template #default="{ row }">{{ warehouseName(row.warehouseId) }}</template></el-table-column
         >
-        <el-table-column prop="customerName" label="客户" min-width="150" show-overflow-tooltip />
+        <el-table-column
+          prop="customerName"
+          label="客户"
+          min-width="150"
+          show-overflow-tooltip
+          :formatter="tableDash"
+        />
         <el-table-column label="出库类型" width="110" align="center"
           ><template #default="{ row }">{{ optionLabel(OUTBOUND_TYPE, row.outboundType) }}</template></el-table-column
         >
-        <el-table-column label="明细" width="110" align="right"
-          ><template #default="{ row }">{{ row.itemCount }} 项 / {{ row.totalQuantity }}</template></el-table-column
+        <el-table-column label="明细（项 / 数量）" width="140" align="right" class-name="num"
+          ><template #default="{ row }"
+            >{{ row.itemCount }} / {{ formatQty(row.totalQuantity) }}</template
+          ></el-table-column
         >
         <el-table-column label="创建人" min-width="100" show-overflow-tooltip
-          ><template #default="{ row }">{{ row.createByName || '-' }}</template></el-table-column
+          ><template #default="{ row }">{{ dash(row.createByName) }}</template></el-table-column
         >
         <el-table-column label="创建时间" width="160" align="center"
           ><template #default="{ row }">{{ formatDateTime(row.createTime) }}</template></el-table-column
         >
-        <el-table-column prop="remark" label="备注" min-width="140" show-overflow-tooltip />
+        <el-table-column prop="remark" label="备注" min-width="140" show-overflow-tooltip :formatter="tableDash" />
         <el-table-column label="操作" width="190" fixed="right" align="center">
           <template #default="{ row }"><RowActions :actions="rowActions(row)" /></template>
         </el-table-column>
       </el-table>
-      <ListPagination v-model:current="page.current" v-model:size="page.size" :total="filtered.length" />
+      <ListPagination v-model:current="page.current" v-model:size="page.size" :total="total" @change="reload" />
     </el-card>
 
     <el-dialog
@@ -176,9 +156,9 @@
         <el-table-column type="index" label="#" width="50" align="center" />
         <el-table-column prop="productCode" label="商品编码" min-width="110" show-overflow-tooltip />
         <el-table-column prop="productName" label="商品名称" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="quantity" label="数量" width="80" align="right" />
+        <el-table-column prop="quantity" label="数量" width="90" align="right" class-name="num" :formatter="tableQty" />
         <el-table-column prop="unit" label="单位" width="60" align="center" />
-        <el-table-column prop="batchNo" label="批次" min-width="90" show-overflow-tooltip />
+        <el-table-column prop="batchNo" label="批次" min-width="90" show-overflow-tooltip :formatter="tableDash" />
         <el-table-column label="库位" min-width="100" align="center" show-overflow-tooltip
           ><template #default="{ row }">{{ locationCode(row.locationId) }}</template></el-table-column
         >
@@ -256,61 +236,48 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Plus } from '@element-plus/icons-vue'
 import PageHeader from '@/components/list-page/PageHeader.vue'
 import SearchPanel from '@/components/list-page/SearchPanel.vue'
 import TableToolbar from '@/components/list-page/TableToolbar.vue'
 import ListPagination from '@/components/list-page/ListPagination.vue'
+import StatusTabs from '@/components/list-page/StatusTabs.vue'
 import RowActions from '@/components/RowActions.vue'
 import { outboundApi, outboundDetailApi } from '@/api'
-import { useLocalPage } from '@/composables/useLocalPage'
+import { useServerList } from '@/composables/useServerList'
 import { useDialogForm } from '@/composables/useDialogForm'
 import { useOrderDetail } from '@/composables/useOrderDetail'
 import { confirmAction } from '@/utils/confirm'
-import { settledValue, formatDateTime } from '@/utils'
+import { formatDateTime } from '@/utils'
+import { dash, tableDash, formatQty, tableQty, rowIndex } from '@/utils/format'
 import { useRefDataStore } from '@/stores/refData'
 import { OUTBOUND_STATUS, OUTBOUND_TYPE, dictLabel, dictType, optionLabel } from '@/constants/dict'
 
 const refData = useRefDataStore()
 const { owners, warehouses, locations, materials } = storeToRefs(refData)
 const { ownerName, warehouseName, locationCode } = refData
-const loading = ref(false)
-const rawList = ref([])
-const search = reactive({ keyword: '', warehouseId: '', status: '' })
-
 const canCancel = (s) => ['DRAFT', 'AUDITED', 'ALLOCATED'].includes(s)
-const countStatus = (s) => rawList.value.filter((o) => o.status === s).length
 
-const filtered = computed(() =>
-  rawList.value.filter((o) => {
-    const kw = search.keyword.trim().toLowerCase()
-    const matchKw = !kw || `${o.outboundCode || ''}${o.customerName || ''}`.toLowerCase().includes(kw)
-    const matchWh = !search.warehouseId || o.warehouseId === search.warehouseId
-    const matchStatus = !search.status || o.status === search.status
-    return matchKw && matchWh && matchStatus
-  })
+// 服务端分页；状态由页签控制，计数随其他筛选条件变化（后端 statusCounts）
+const { query, page, list, total, extra, loading, search, reset, reload } = useServerList((p) => outboundApi.page(p), {
+  keyword: '',
+  warehouseId: null,
+  ownerId: null,
+  status: ''
+})
+
+const { detail, detailList, openDetail, syncDetail } = useOrderDetail(
+  (id) => outboundDetailApi.list(id),
+  (id) => outboundApi.getById(id)
 )
-const { page, pagedList } = useLocalPage(filtered, search)
-
-const { detail, detailList, openDetail, syncDetail } = useOrderDetail((id) => outboundDetailApi.list(id))
 
 // force：刷新按钮强制重拉参考数据；操作后刷新仅重拉单据
 const loadData = async (force = false) => {
-  loading.value = true
-  try {
-    const [orders] = await Promise.allSettled([
-      outboundApi.list(),
-      refData.ensure(['owners', 'materials', 'warehouses', 'locations'], { force })
-    ])
-    rawList.value = settledValue(orders, rawList.value)
-    syncDetail(rawList.value)
-  } finally {
-    loading.value = false
-  }
+  await Promise.all([reload(), refData.ensure(['owners', 'materials', 'warehouses', 'locations'], { force })])
+  syncDetail()
 }
-const resetSearch = () => Object.assign(search, { keyword: '', warehouseId: '', status: '' })
 
 const genCode = () =>
   'OUT' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + Math.floor(Math.random() * 900 + 100)
