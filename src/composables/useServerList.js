@@ -1,5 +1,6 @@
 import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { rememberListQuery } from '@/router/listMemory'
 
 const PAGE_KEYS = ['current', 'size', 'total', 'pages', 'records']
 const isEmpty = (v) => v === null || v === undefined || (typeof v === 'string' && v.trim() === '')
@@ -58,7 +59,10 @@ export function useServerList(fetch, defaults = {}, { syncQuery = true, pageSize
     const q = compact(query)
     if (page.current !== 1) q.pageNum = String(page.current)
     if (page.size !== pageSize) q.pageSize = String(page.size)
-    router.replace({ query: Object.fromEntries(Object.entries(q).map(([k, v]) => [k, String(v)])) })
+    const urlQuery = Object.fromEntries(Object.entries(q).map(([k, v]) => [k, String(v)]))
+    router.replace({ query: urlQuery })
+    // 记住本列表的筛选，详情 / 编辑页的面包屑据此返回原筛选
+    if (route.path) rememberListQuery(route.path, urlQuery)
   }
 
   const reload = async () => {
@@ -99,5 +103,8 @@ export function useServerList(fetch, defaults = {}, { syncQuery = true, pageSize
     return search()
   }
 
-  return { query, page, list, total, extra, loading, search, reset, reload, setFilter }
+  /** 与列表请求一致的筛选参数（不含分页），供导出复用 */
+  const currentParams = () => compact(query)
+
+  return { query, page, list, total, extra, loading, search, reset, reload, setFilter, currentParams }
 }

@@ -20,4 +20,22 @@ describe('resolveBreadcrumb', () => {
   it('仪表盘只显示「首页」且不可点击', () => {
     expect(resolveBreadcrumb({ path: '/dashboard', meta: { title: '仪表盘' } })).toEqual([{ title: '首页' }])
   })
+
+  it('隐藏页插入可点击的父级列表，并可带回原筛选', () => {
+    const route = {
+      path: '/inbound/12',
+      meta: { title: '入库单详情', group: '仓储作业', parent: { title: '入库管理', path: '/inbound' } }
+    }
+    expect(resolveBreadcrumb(route)).toEqual([
+      { title: '首页', to: '/dashboard' },
+      { title: '仓储作业' },
+      { title: '入库管理', to: '/inbound' },
+      { title: '入库单详情' }
+    ])
+    const toList = (path) => ({ path, query: { status: 'DRAFT' } })
+    expect(resolveBreadcrumb(route, toList)[2]).toEqual({
+      title: '入库管理',
+      to: { path: '/inbound', query: { status: 'DRAFT' } }
+    })
+  })
 })

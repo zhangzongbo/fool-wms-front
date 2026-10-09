@@ -94,6 +94,13 @@ describe('useServerList', () => {
     expect(l.loading.value).toBe(false)
   })
 
+  it('currentParams 与列表请求的筛选一致（不含分页），供导出复用', () => {
+    const l = useServerList(() => pageOf([], 0), DEFAULTS)
+    l.query.keyword = ' IN01 '
+    l.query.warehouseId = 3
+    expect(l.currentParams()).toEqual({ keyword: 'IN01', warehouseId: 3 })
+  })
+
   it('syncQuery 为 false 时不读写 URL', async () => {
     route.query = { status: 'DRAFT' }
     const l = useServerList(() => pageOf([], 0), DEFAULTS, { syncQuery: false })

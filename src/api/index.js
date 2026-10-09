@@ -79,6 +79,12 @@ export const inventoryApi = {
 // ============ 入库单 ============
 export const inboundApi = {
   page: (data) => request({ url: '/inbound-order/list', method: 'post', data }),
+  // 详情页 / 编辑页（spec #14）：整单保存（单头 + 明细，一个事务）、详情视图、状态日志、库存流水
+  createFull: (data) => request({ url: '/inbound-order/full', method: 'post', data }),
+  updateFull: (id, data) => request({ url: `/inbound-order/${id}/full`, method: 'put', data }),
+  view: (id) => request({ url: `/inbound-order/${id}/view`, method: 'get' }),
+  logs: (id) => request({ url: `/inbound-order/${id}/logs`, method: 'get' }),
+  transactions: (id) => request({ url: `/inbound-order/${id}/transactions`, method: 'get' }),
   getById: (id) => request({ url: `/inbound-order/${id}`, method: 'get' }),
   add: (data) => request({ url: '/inbound-order/add', method: 'post', data }),
   update: (id, data) => request({ url: `/inbound-order/${id}`, method: 'put', data }),
@@ -97,6 +103,12 @@ export const inboundDetailApi = {
 // ============ 出库单 ============
 export const outboundApi = {
   page: (data) => request({ url: '/outbound-order/list', method: 'post', data }),
+  // 详情页 / 编辑页（spec #14）：整单保存（单头 + 明细，一个事务）、详情视图、状态日志、库存流水
+  createFull: (data) => request({ url: '/outbound-order/full', method: 'post', data }),
+  updateFull: (id, data) => request({ url: `/outbound-order/${id}/full`, method: 'put', data }),
+  view: (id) => request({ url: `/outbound-order/${id}/view`, method: 'get' }),
+  logs: (id) => request({ url: `/outbound-order/${id}/logs`, method: 'get' }),
+  transactions: (id) => request({ url: `/outbound-order/${id}/transactions`, method: 'get' }),
   getById: (id) => request({ url: `/outbound-order/${id}`, method: 'get' }),
   add: (data) => request({ url: '/outbound-order/add', method: 'post', data }),
   update: (id, data) => request({ url: `/outbound-order/${id}`, method: 'put', data }),
@@ -117,6 +129,14 @@ export const outboundDetailApi = {
 // ============ 盘点单 ============
 export const checkApi = {
   page: (data) => request({ url: '/inventory-check/list', method: 'post', data }),
+  // 详情页 / 编辑页（spec #14）：整单保存（单头 + 明细，一个事务）、详情视图、状态日志、库存流水
+  createFull: (data) => request({ url: '/inventory-check/full', method: 'post', data }),
+  updateFull: (id, data) => request({ url: `/inventory-check/${id}/full`, method: 'put', data }),
+  view: (id) => request({ url: `/inventory-check/${id}/view`, method: 'get' }),
+  logs: (id) => request({ url: `/inventory-check/${id}/logs`, method: 'get' }),
+  transactions: (id) => request({ url: `/inventory-check/${id}/transactions`, method: 'get' }),
+  // 盘点中批量录入实盘量 / 备注
+  saveCounts: (id, data) => request({ url: `/inventory-check/${id}/counts`, method: 'put', data }),
   getById: (id) => request({ url: `/inventory-check/${id}`, method: 'get' }),
   add: (data) => request({ url: '/inventory-check/add', method: 'post', data }),
   update: (id, data) => request({ url: `/inventory-check/${id}`, method: 'put', data }),
@@ -163,3 +183,12 @@ export const permissionApi = {
   add: (data) => request({ url: '/permission/add', method: 'post', data }),
   delete: (id) => request({ url: `/permission/${id}`, method: 'delete' })
 }
+
+// ============ 导出 / PDF（spec #14，配合 utils/download 的 downloadFile / openPdf 使用） ============
+export const EXPORT_URLS = {
+  inbound: '/inbound-order/export',
+  outbound: '/outbound-order/export',
+  check: '/inventory-check/export',
+  inventory: '/inventory/export'
+}
+export const pdfUrl = (kind, id) => `/${kind === 'inbound' ? 'inbound-order' : 'outbound-order'}/${id}/pdf`

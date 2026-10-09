@@ -26,9 +26,9 @@ request.interceptors.request.use(
 // 响应拦截器
 request.interceptors.response.use(
   (response) => {
-    // blob 直接返回
+    // blob 直接返回；rawResponse 时返回完整响应（下载需要读取 Content-Disposition 与 Content-Type，见 utils/download）
     if (response.config.responseType === 'blob') {
-      return response.data
+      return response.config.rawResponse ? response : response.data
     }
 
     const { code, message, data, success } = response.data || {}
@@ -45,7 +45,8 @@ request.interceptors.response.use(
     }
 
     ElMessage.error(message || '请求失败')
-    return Promise.reject(new Error(message || '请求失败'))
+    // 保留业务码与数据：如整单保存的行错误（code=400，data=[{ line, field, message }]）
+    return Promise.reject(Object.assign(new Error(message || '请求失败'), { code, data }))
   },
   (error) => {
     let errorMessage = '网络错误'
@@ -80,7 +81,7 @@ request.interceptors.response.use(
 )
 
 let redirecting = false
-function handleUnauthorized() {
+export function handleUnauthorized() {
   ElMessage.error('登录已失效，请重新登录')
   localStorage.removeItem('token')
   localStorage.removeItem('tokenName')

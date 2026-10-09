@@ -60,7 +60,7 @@
           </el-button>
           <!-- 页面标题由各页 PageHeader 展示，顶栏只负责导航 -->
           <el-breadcrumb class="header-breadcrumb" separator="/">
-            <el-breadcrumb-item v-for="item in breadcrumb" :key="item.title" :to="item.to">{{
+            <el-breadcrumb-item v-for="(item, i) in breadcrumb" :key="i" :to="item.to">{{
               item.title
             }}</el-breadcrumb-item>
           </el-breadcrumb>
@@ -96,7 +96,11 @@
 
       <el-main class="main-content">
         <div class="page-wrapper">
-          <router-view />
+          <!-- 按路由名区分实例：新建 / 编辑 / 详情页在不同单据间共用组件（OrderEdit / OrderDetail），换路由须重新挂载；
+               同一路由内仅 query 变化（列表筛选）不重建 -->
+          <router-view v-slot="{ Component, route: viewRoute }">
+            <component :is="Component" :key="viewRoute.name" />
+          </router-view>
         </div>
       </el-main>
     </el-container>
@@ -113,6 +117,7 @@ import { useAppStore } from '@/stores/app'
 import { Fold, Expand, ArrowDown, SwitchButton } from '@element-plus/icons-vue'
 import { MENU_GROUP_ICONS } from '@/router/menuGroups'
 import { resolveBreadcrumb } from '@/router/breadcrumb'
+import { listLocation } from '@/router/listMemory'
 
 const route = useRoute()
 const router = useRouter()
@@ -132,7 +137,8 @@ const menus = computed(() => {
   const result = []
   const groups = {}
   children.forEach(({ path, meta = {} }) => {
-    if (!meta.title || !userStore.hasPermission(meta.perm)) return
+    // meta.hidden：详情 / 编辑等页面不进菜单
+    if (!meta.title || meta.hidden || !userStore.hasPermission(meta.perm)) return
     const item = { path: `/${path}`, title: meta.title, icon: meta.icon }
     if (!meta.group) {
       result.push(item)
@@ -158,8 +164,9 @@ const resolveEnvironmentLabel = () => {
 }
 const environmentLabel = ref(resolveEnvironmentLabel())
 
-const activeMenu = computed(() => route.path)
-const breadcrumb = computed(() => resolveBreadcrumb(route))
+// 详情 / 编辑等隐藏页高亮所属列表（meta.activeMenu）
+const activeMenu = computed(() => route.meta?.activeMenu || route.path)
+const breadcrumb = computed(() => resolveBreadcrumb(route, listLocation))
 
 const toggleSidebar = () => {
   appStore.toggleSidebar()

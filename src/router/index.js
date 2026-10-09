@@ -4,6 +4,49 @@ import { Odometer, ChatDotRound, Box } from '@element-plus/icons-vue'
 import Layout from '@/components/Layout.vue'
 import { useUserStore } from '@/stores/user'
 
+const OrderEdit = () => import('@/views/order/OrderEdit.vue')
+const OrderDetail = () => import('@/views/order/OrderDetail.vue')
+
+/**
+ * 单据路由：列表进菜单；新建 / 详情 / 编辑为隐藏页（meta.hidden），侧栏高亮列表（meta.activeMenu），
+ * 面包屑插入可点击的列表（meta.parent）。new 必须在 :id 之前声明
+ */
+function orderRoutes(base, name, label, listComponent) {
+  const group = '仓储作业'
+  const listTitle = `${label}管理`
+  const hidden = { hidden: true, group, activeMenu: `/${base}`, parent: { title: listTitle, path: `/${base}` } }
+  const perm = (p) => `sys:${base}:${p}`
+  return [
+    {
+      path: base,
+      name,
+      component: listComponent,
+      meta: { title: listTitle, group, perm: perm('list') }
+    },
+    {
+      path: `${base}/new`,
+      name: `${name}New`,
+      component: OrderEdit,
+      props: { kind: base },
+      meta: { ...hidden, title: `新建${label}单`, perm: perm('add') }
+    },
+    {
+      path: `${base}/:id(\\d+)`,
+      name: `${name}Detail`,
+      component: OrderDetail,
+      props: { kind: base },
+      meta: { ...hidden, title: `${label}单详情`, perm: perm('list') }
+    },
+    {
+      path: `${base}/:id(\\d+)/edit`,
+      name: `${name}Edit`,
+      component: OrderEdit,
+      props: { kind: base },
+      meta: { ...hidden, title: `编辑${label}单`, perm: perm('update') }
+    }
+  ]
+}
+
 // Layout 子路由即侧边菜单（按声明顺序）：
 // meta.title 菜单与页面标题；meta.icon 一级菜单图标；meta.group 归入的分组（图标见 menuGroups.js）；meta.perm 访问所需权限
 const routes = [
@@ -73,25 +116,10 @@ const routes = [
         meta: { title: '库存查询', icon: Box, perm: 'sys:inventory:list' }
       },
 
-      // 作业
-      {
-        path: 'inbound',
-        name: 'Inbound',
-        component: () => import('@/views/inbound/index.vue'),
-        meta: { title: '入库管理', group: '仓储作业', perm: 'sys:inbound:list' }
-      },
-      {
-        path: 'outbound',
-        name: 'Outbound',
-        component: () => import('@/views/outbound/index.vue'),
-        meta: { title: '出库管理', group: '仓储作业', perm: 'sys:outbound:list' }
-      },
-      {
-        path: 'check',
-        name: 'Check',
-        component: () => import('@/views/check/index.vue'),
-        meta: { title: '盘点管理', group: '仓储作业', perm: 'sys:check:list' }
-      },
+      // 作业：列表 + 新建 / 详情 / 编辑（隐藏页，不进菜单，高亮所属列表）
+      ...orderRoutes('inbound', 'Inbound', '入库', () => import('@/views/inbound/index.vue')),
+      ...orderRoutes('outbound', 'Outbound', '出库', () => import('@/views/outbound/index.vue')),
+      ...orderRoutes('check', 'Check', '盘点', () => import('@/views/check/index.vue')),
 
       // 系统
       {
