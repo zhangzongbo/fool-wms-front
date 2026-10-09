@@ -137,7 +137,12 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="仓库编码" prop="warehouseCode">
-              <el-input v-model="warehouseForm.warehouseCode" placeholder="请输入仓库编码" />
+              <!-- 编码创建后不可修改（后端仅新建时生效） -->
+              <el-input
+                v-model="warehouseForm.warehouseCode"
+                placeholder="请输入仓库编码"
+                :disabled="!!editingWarehouse"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -192,12 +197,6 @@
 
         <el-form-item label="仓库描述">
           <el-input v-model="warehouseForm.warehouseDesc" type="textarea" :rows="3" placeholder="请输入仓库描述信息" />
-        </el-form-item>
-
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="warehouseForm.status">
-            <el-radio v-for="s in ENABLE_STATUS" :key="s.value" :value="s.value">{{ s.label }}</el-radio>
-          </el-radio-group>
         </el-form-item>
       </el-form>
       <template #footer>

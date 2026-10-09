@@ -140,7 +140,12 @@
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="物料编码" prop="materialCode">
-              <el-input v-model="materialForm.materialCode" placeholder="请输入物料编码" />
+              <!-- 编码创建后不可修改（库存与单据中冗余了编码） -->
+              <el-input
+                v-model="materialForm.materialCode"
+                placeholder="请输入物料编码"
+                :disabled="!!editingMaterial"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">

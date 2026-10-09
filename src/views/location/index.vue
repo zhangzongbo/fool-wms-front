@@ -85,10 +85,12 @@
     >
       <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
         <el-form-item label="所属仓库" prop="warehouseId">
+          <!-- 所属仓库创建后不可修改；库区须属于该仓库（后端校验） -->
           <el-select
             v-model="form.warehouseId"
             placeholder="请选择仓库"
             style="width: 100%"
+            :disabled="dialog.isEdit"
             @change="onWarehouseChange"
           >
             <el-option v-for="w in warehouses" :key="w.id" :label="w.warehouseName" :value="w.id"
