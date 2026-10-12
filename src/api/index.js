@@ -66,7 +66,9 @@ export const materialApi = {
 // ============ 库存管理 ============
 // 库存只读：变动只能由入库完成 / 出库分配·发货 / 盘点过账驱动，后端不提供直接写接口
 export const inventoryApi = {
-  page: (data) => request({ url: '/inventory/list', method: 'post', data })
+  page: (data) => request({ url: '/inventory/list', method: 'post', data }),
+  // 库存流水（spec #16）：时间区间必填（≤ 180 天），返回物料名称、库位编码与来源单据 ID
+  transactions: (data) => request({ url: '/inventory/transactions', method: 'post', data })
 }
 
 // ============ 入库单 ============
@@ -171,6 +173,7 @@ export const EXPORT_URLS = {
   outbound: '/outbound-order/export',
   check: '/inventory-check/export',
   adjust: '/inventory-adjust/export',
-  inventory: '/inventory/export'
+  inventory: '/inventory/export',
+  inventoryTxn: '/inventory/transactions/export'
 }
 export const pdfUrl = (kind, id) => `/${kind === 'inbound' ? 'inbound-order' : 'outbound-order'}/${id}/pdf`

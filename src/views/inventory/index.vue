@@ -148,6 +148,15 @@
           align="center"
           :formatter="tableDash"
         />
+        <el-table-column
+          column-key="action"
+          label="操作"
+          :width="cols.width('action', 80)"
+          fixed="right"
+          align="center"
+        >
+          <template #default="{ row }"><RowActions :actions="rowActions(row)" /></template>
+        </el-table-column>
       </el-table>
       <ListPagination v-model:current="page.current" v-model:size="page.size" :total="total" @change="reload" />
     </el-card>
@@ -157,32 +166,39 @@
 <script setup>
 import { Download } from '@element-plus/icons-vue'
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import PageHeader from '@/components/list-page/PageHeader.vue'
 import SearchPanel from '@/components/list-page/SearchPanel.vue'
 import TableToolbar from '@/components/list-page/TableToolbar.vue'
 import ColumnSettings from '@/components/list-page/ColumnSettings.vue'
 import ListPagination from '@/components/list-page/ListPagination.vue'
+import RowActions from '@/components/RowActions.vue'
 import { inventoryApi, EXPORT_URLS } from '@/api'
 import { useServerList } from '@/composables/useServerList'
 import { useTableColumns } from '@/composables/useTableColumns'
 import { downloadFile } from '@/utils/download'
-import { dash, tableDash, formatQty, rowIndex } from '@/utils/format'
+import { dash, tableDash, formatQty, rowIndex, recentDays } from '@/utils/format'
 import { useRefDataStore } from '@/stores/refData'
 
 // 列设置（显示 / 隐藏、拖动列宽）：按用户记在本地；序号、编码、状态、操作为固定列不可隐藏；列定义变化时 version 加 1
-const cols = useTableColumns('inventory', [
-  { key: 'index', label: '序号', fixed: true },
-  { key: 'owner', label: '货主' },
-  { key: 'productCode', label: '商品编码', fixed: true },
-  { key: 'productName', label: '商品名称' },
-  { key: 'batchNo', label: '批次号' },
-  { key: 'location', label: '库位' },
-  { key: 'onHand', label: '在库量' },
-  { key: 'frozen', label: '冻结量' },
-  { key: 'available', label: '可用量' },
-  { key: 'unit', label: '单位' }
-])
+const cols = useTableColumns(
+  'inventory',
+  [
+    { key: 'index', label: '序号', fixed: true },
+    { key: 'owner', label: '货主' },
+    { key: 'productCode', label: '商品编码', fixed: true },
+    { key: 'productName', label: '商品名称' },
+    { key: 'batchNo', label: '批次号' },
+    { key: 'location', label: '库位' },
+    { key: 'onHand', label: '在库量' },
+    { key: 'frozen', label: '冻结量' },
+    { key: 'available', label: '可用量' },
+    { key: 'unit', label: '单位' },
+    { key: 'action', label: '操作', fixed: true }
+  ],
+  { version: 2 }
+)
 
 const refData = useRefDataStore()
 const { owners } = storeToRefs(refData)
@@ -209,6 +225,21 @@ const ownerName = (id) => {
   if (!id) return '-'
   const name = refData.ownerName(id)
   return name === '-' ? `#${id}` : name
+}
+
+// 行操作：查看该库存维度最近 90 天的流水（spec #16 Q-G）
+const router = useRouter()
+const rowActions = (row) => {
+  const [startDate, endDate] = recentDays(90)
+  const q = { startDate, endDate, ownerId: row.ownerId, skuId: row.skuId, locationId: row.locationId }
+  if (row.batchNo) q.batchNo = row.batchNo
+  return [
+    {
+      label: '流水',
+      perm: 'sys:inventory:txn',
+      onClick: () => router.push({ path: '/inventory/transactions', query: q })
+    }
+  ]
 }
 
 // force：刷新按钮强制重拉参考数据

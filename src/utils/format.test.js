@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { dash, tableDash, formatQty, tableQty, rowIndex } from './format'
+import { dash, tableDash, formatQty, tableQty, rowIndex, ymd, recentDays } from './format'
 
 describe('format', () => {
   it('dash：空值显示 -，0 和 false 原样保留', () => {
@@ -23,5 +23,11 @@ describe('format', () => {
 
   it('rowIndex：翻页后序号连续', () => {
     expect(rowIndex({ current: 3, size: 20 })(0)).toBe(41)
+  })
+
+  it('ymd / recentDays：本地日期，含今天，跨月', () => {
+    expect(ymd(new Date(2026, 0, 5))).toBe('2026-01-05')
+    expect(recentDays(30, new Date(2026, 9, 12))).toEqual(['2026-09-13', '2026-10-12'])
+    expect(recentDays(1, new Date(2026, 2, 1))).toEqual(['2026-03-01', '2026-03-01'])
   })
 })

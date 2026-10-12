@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Odometer, ChatDotRound, Box } from '@element-plus/icons-vue'
+import { Odometer, ChatDotRound, Box, Tickets } from '@element-plus/icons-vue'
 import Layout from '@/components/Layout.vue'
 import { useUserStore } from '@/stores/user'
 
@@ -114,6 +114,12 @@ const routes = [
         name: 'Inventory',
         component: () => import('@/views/inventory/index.vue'),
         meta: { title: '库存查询', icon: Box, perm: 'sys:inventory:list' }
+      },
+      {
+        path: 'inventory/transactions',
+        name: 'InventoryTransactions',
+        component: () => import('@/views/inventory/transactions.vue'),
+        meta: { title: '库存流水', icon: Tickets, perm: 'sys:inventory:txn' }
       },
 
       // 作业：列表 + 新建 / 详情 / 编辑（隐藏页，不进菜单，高亮所属列表）

@@ -23,3 +23,14 @@ export const tableQty = (row, column, cellValue) => formatQty(cellValue)
 
 /** 分页表格的全局序号：翻页后连续，用法 <el-table-column type="index" :index="rowIndex(page)" /> */
 export const rowIndex = (page) => (i) => (page.current - 1) * page.size + i + 1
+
+const pad2 = (n) => String(n).padStart(2, '0')
+
+/** 本地日期 YYYY-MM-DD（筛选条件、接口日期参数用） */
+export const ymd = (d = new Date()) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+
+/** 最近 n 天（含今天）的日期区间 [开始, 结束]，如流水页默认最近 30 天 */
+export const recentDays = (n, today = new Date()) => {
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (n - 1))
+  return [ymd(start), ymd(today)]
+}
