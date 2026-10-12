@@ -1,4 +1,6 @@
-import { inboundApi, outboundApi, checkApi } from '@/api'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { inboundApi, outboundApi, checkApi, adjustApi } from '@/api'
+import { useUserStore } from '@/stores/user'
 import { confirmAction } from '@/utils/confirm'
 
 /**
@@ -117,21 +119,108 @@ const CONFIG = {
       }
     ],
     cancel: (o, h) => h.transit(o, 'CANCELLED', '取消')
+  },
+  // 库存调整单（spec #16）：提交 → 审批（职责分离：创建人看不到「审批」，后端同样拒绝）/ 驳回（须填原因）
+  adjust: {
+    api: adjustApi,
+    label: '调整单',
+    codeOf: (o) => o.adjustCode,
+    perm: (p) => `sys:adjust:${p}`,
+    cancellable: ['DRAFT', 'PENDING'],
+    cancelPerm: 'sys:adjust:cancel',
+    advance: (o, h) => [
+      {
+        label: '提交',
+        show: o.status === 'DRAFT',
+        perm: 'sys:adjust:submit',
+        onClick: () =>
+          h.confirm(
+            `确定提交调整单「${o.adjustCode}」审批吗？提交后不可修改，驳回后可再次编辑。`,
+            () => adjustApi.submit(o.id),
+            {
+              title: '提交审批',
+              confirmButtonText: '提交',
+              successText: '已提交审批'
+            }
+          )
+      },
+      {
+        label: '审批',
+        show: o.status === 'PENDING' && !h.isMine(o),
+        perm: 'sys:adjust:approve',
+        onClick: () =>
+          h.confirm(
+            `审批通过后将按明细调整库存并写入流水（调减不得超过当前可用量），不可撤销。确定审批调整单「${o.adjustCode}」？`,
+            () => adjustApi.approve(o.id),
+            { title: '审批调整单', confirmButtonText: '审批通过', successText: '审批通过，库存已调整' }
+          )
+      },
+      {
+        label: '驳回',
+        show: o.status === 'PENDING',
+        perm: 'sys:adjust:approve',
+        onClick: () =>
+          h.prompt(
+            `驳回调整单「${o.adjustCode}」`,
+            '驳回原因（提交人修改后可重新提交）',
+            (reason) => adjustApi.reject(o.id, reason),
+            {
+              confirmButtonText: '驳回',
+              successText: '已驳回'
+            }
+          )
+      }
+    ],
+    cancel: (o, h) =>
+      h.confirm(`确定取消调整单「${o.adjustCode}」吗？`, () => adjustApi.cancel(o.id), {
+        title: '取消调整单',
+        confirmButtonText: '确定取消',
+        successText: '已取消'
+      })
   }
 }
 
 /**
- * @param {'inbound'|'outbound'|'check'} kind
+ * @param {'inbound'|'outbound'|'check'|'adjust'} kind
  * @param {{ onChanged: Function, onDeleted?: Function, onView?: Function, onEdit: Function }} handlers
  *   onChanged：状态变更成功后刷新；onDeleted：删除成功后（详情页返回列表，默认同 onChanged）；
  *   onView：传入时动作列表首项为「明细」（列表页用）；onEdit：进入编辑页
  */
 export function useOrderActions(kind, { onChanged, onDeleted = onChanged, onView, onEdit }) {
   const c = CONFIG[kind]
+  // 调整单需要判断「是否本人创建」（create_by_code 为登录名）
+  const userStore = kind === 'adjust' ? useUserStore() : null
   const confirm = (message, action, options = {}) =>
     confirmAction(message, action, { ...options, onSuccess: onChanged })
+  /** 填写原因后执行（如驳回）：取消或接口失败返回 false（接口错误已由拦截器提示） */
+  const prompt = async (title, message, action, { confirmButtonText = '确定', successText } = {}) => {
+    let value
+    try {
+      ;({ value } = await ElMessageBox.prompt(message, title, {
+        confirmButtonText,
+        inputType: 'textarea',
+        inputValidator: (v) => {
+          const text = (v || '').trim()
+          if (!text) return '请填写原因'
+          return text.length <= 200 || '不能超过 200 个字符'
+        }
+      }))
+    } catch (e) {
+      return false
+    }
+    try {
+      await action(value.trim())
+    } catch (e) {
+      return false
+    }
+    if (successText) ElMessage.success(successText)
+    onChanged?.()
+    return true
+  }
   const helpers = {
     confirm,
+    prompt,
+    isMine: (o) => !!o.createByCode && o.createByCode === userStore?.userInfo?.username,
     transit: (o, status, label) =>
       confirm(`确定${label}${c.label}「${c.codeOf(o)}」吗？`, () => c.api.changeStatus(o.id, status), {
         successText: `${label}成功`

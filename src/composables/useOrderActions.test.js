@@ -16,13 +16,22 @@ vi.mock('@/api', () => {
     allocate: vi.fn(),
     ship: vi.fn(),
     cancel: vi.fn(),
-    post: vi.fn()
+    post: vi.fn(),
+    submit: vi.fn(),
+    approve: vi.fn(),
+    reject: vi.fn()
   })
-  return { inboundApi: api(), outboundApi: api(), checkApi: api() }
+  return { inboundApi: api(), outboundApi: api(), checkApi: api(), adjustApi: api() }
 })
+vi.mock('@/stores/user', () => ({ useUserStore: () => ({ userInfo: { username: 'maker' } }) }))
+vi.mock('element-plus', () => ({
+  ElMessage: { success: vi.fn() },
+  ElMessageBox: { prompt: vi.fn(async () => ({ value: '  数量不对  ' })) }
+}))
 
 import { confirmAction } from '@/utils/confirm'
-import { inboundApi, outboundApi, checkApi } from '@/api'
+import { ElMessageBox } from 'element-plus'
+import { inboundApi, outboundApi, checkApi, adjustApi } from '@/api'
 import { useOrderActions } from './useOrderActions'
 
 const visible = (list) => list.filter((a) => a.show !== false).map((a) => a.label)
@@ -70,5 +79,40 @@ describe('useOrderActions', () => {
     find(actions, '录入实盘').onClick()
     expect(onEdit).toHaveBeenCalledWith(order)
     expect(checkApi.post).not.toHaveBeenCalled()
+  })
+
+  it('调整单草稿：提交 / 编辑 / 取消 / 删除，取消走专用接口与权限', async () => {
+    const { actionsOf } = useOrderActions('adjust', { onChanged: vi.fn(), onEdit: vi.fn() })
+    const actions = actionsOf({ id: 5, adjustCode: 'ADJ5', status: 'DRAFT', createByCode: 'maker' })
+    expect(visible(actions)).toEqual(['提交', '编辑', '取消', '删除'])
+    expect(find(actions, '提交').perm).toBe('sys:adjust:submit')
+    expect(find(actions, '取消').perm).toBe('sys:adjust:cancel')
+    await find(actions, '提交').onClick()
+    expect(adjustApi.submit).toHaveBeenCalledWith(5)
+    await find(actions, '取消').onClick()
+    expect(adjustApi.cancel).toHaveBeenCalledWith(5)
+  })
+
+  it('调整单待审批：创建人看不到「审批」，其他人可审批；驳回须填原因', async () => {
+    const onChanged = vi.fn()
+    const { actionsOf } = useOrderActions('adjust', { onChanged, onEdit: vi.fn() })
+    const mine = actionsOf({ id: 6, adjustCode: 'ADJ6', status: 'PENDING', createByCode: 'maker' })
+    expect(visible(mine)).toEqual(['驳回', '取消'])
+
+    const others = actionsOf({ id: 6, adjustCode: 'ADJ6', status: 'PENDING', createByCode: 'someone' })
+    expect(visible(others)).toEqual(['审批', '驳回', '取消'])
+    expect(find(others, '审批').perm).toBe('sys:adjust:approve')
+    await find(others, '审批').onClick()
+    expect(adjustApi.approve).toHaveBeenCalledWith(6)
+
+    await find(others, '驳回').onClick()
+    expect(ElMessageBox.prompt).toHaveBeenCalled()
+    expect(adjustApi.reject).toHaveBeenCalledWith(6, '数量不对')
+    expect(onChanged).toHaveBeenCalled()
+  })
+
+  it('调整单已审批：无任何操作', () => {
+    const { actionsOf } = useOrderActions('adjust', { onChanged: vi.fn(), onEdit: vi.fn() })
+    expect(visible(actionsOf({ id: 7, adjustCode: 'ADJ7', status: 'APPROVED', createByCode: 'x' }))).toEqual([])
   })
 })

@@ -108,6 +108,12 @@
               </div>
               <el-badge :value="todo.check" :max="99" type="danger" :show-zero="false" />
             </div>
+            <div class="todo-item" @click="go('/adjust', 'PENDING')">
+              <div class="todo-left">
+                <el-icon class="tone-warning"><EditPen /></el-icon><span>调整单待审批</span>
+              </div>
+              <el-badge :value="todo.adjust" :max="99" type="warning" :show-zero="false" />
+            </div>
           </div>
         </el-card>
       </el-col>
@@ -179,7 +185,8 @@ import {
   Download,
   Upload,
   Coordinate,
-  DocumentChecked
+  DocumentChecked,
+  EditPen
 } from '@element-plus/icons-vue'
 import { dashboardApi } from '@/api'
 import PageHeader from '@/components/list-page/PageHeader.vue'
@@ -207,6 +214,7 @@ const go = (path, status) => router.push(status ? { path, query: { status } } : 
 const inbound = ref({})
 const outbound = ref({})
 const check = ref({})
+const adjust = ref({})
 const recentInbound = ref([])
 const recentOutbound = ref([])
 const stats = reactive({ owner: 0, warehouse: 0, inventory: 0, todo: 0 })
@@ -216,7 +224,8 @@ const todo = computed(() => ({
   inbound: cnt(inbound, 'AUDITED'),
   outbound: cnt(outbound, 'ALLOCATED'),
   allocate: cnt(outbound, 'AUDITED'),
-  check: cnt(check, 'COUNTED')
+  check: cnt(check, 'COUNTED'),
+  adjust: cnt(adjust, 'PENDING')
 }))
 
 const chartOption = computed(() => {
@@ -276,12 +285,13 @@ const loadData = async () => {
     inbound.value = data?.inboundStatusCounts || {}
     outbound.value = data?.outboundStatusCounts || {}
     check.value = data?.checkStatusCounts || {}
+    adjust.value = data?.adjustStatusCounts || {}
     recentInbound.value = data?.recentInbound || []
     recentOutbound.value = data?.recentOutbound || []
     stats.owner = data?.ownerCount || 0
     stats.warehouse = data?.warehouseCount || 0
     stats.inventory = data?.inventoryCount || 0
-    stats.todo = todo.value.inbound + todo.value.outbound + todo.value.allocate + todo.value.check
+    stats.todo = todo.value.inbound + todo.value.outbound + todo.value.allocate + todo.value.check + todo.value.adjust
   } catch (e) {
     // 错误提示已由请求拦截器处理
   } finally {

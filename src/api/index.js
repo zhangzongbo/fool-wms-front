@@ -115,6 +115,24 @@ export const checkApi = {
   post: (id) => request({ url: `/inventory-check/${id}/post`, method: 'post' })
 }
 
+// ============ 库存调整单（spec #16）============
+// 人工修正库存的唯一入口：草稿 → 提交 → 审批（创建人不能审批自己的单）时过账，流水类型 ADJUST
+export const adjustApi = {
+  page: (data) => request({ url: '/inventory-adjust/list', method: 'post', data }),
+  createFull: (data) => request({ url: '/inventory-adjust/full', method: 'post', data }),
+  updateFull: (id, data) => request({ url: `/inventory-adjust/${id}/full`, method: 'put', data }),
+  view: (id) => request({ url: `/inventory-adjust/${id}/view`, method: 'get' }),
+  logs: (id) => request({ url: `/inventory-adjust/${id}/logs`, method: 'get' }),
+  transactions: (id) => request({ url: `/inventory-adjust/${id}/transactions`, method: 'get' }),
+  submit: (id) => request({ url: `/inventory-adjust/${id}/submit`, method: 'post' }),
+  approve: (id) => request({ url: `/inventory-adjust/${id}/approve`, method: 'post' }),
+  reject: (id, reason) => request({ url: `/inventory-adjust/${id}/reject`, method: 'post', data: { reason } }),
+  cancel: (id) => request({ url: `/inventory-adjust/${id}/cancel`, method: 'post' }),
+  delete: (id) => request({ url: `/inventory-adjust/${id}`, method: 'delete' }),
+  // 录入参考：按货主 + 物料 + 库位 + 批次批量查询当前可用量
+  available: (data) => request({ url: '/inventory-adjust/available', method: 'post', data })
+}
+
 // ============ 系统 - 用户 ============
 export const userApi = {
   page: (data) => request({ url: '/user/list', method: 'post', data }),
@@ -152,6 +170,7 @@ export const EXPORT_URLS = {
   inbound: '/inbound-order/export',
   outbound: '/outbound-order/export',
   check: '/inventory-check/export',
+  adjust: '/inventory-adjust/export',
   inventory: '/inventory/export'
 }
 export const pdfUrl = (kind, id) => `/${kind === 'inbound' ? 'inbound-order' : 'outbound-order'}/${id}/pdf`

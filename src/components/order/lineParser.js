@@ -1,3 +1,5 @@
+import { ADJUST_TYPE } from '@/constants/dict'
+
 /**
  * 从 Excel 复制粘贴的明细解析（TSV：列以制表符分隔、行以换行分隔）
  * 列顺序按单据类型固定，见 PASTE_COLUMNS；首行为表头（首列为「物料编码」）时自动跳过
@@ -5,7 +7,8 @@
 export const PASTE_COLUMNS = {
   inbound: ['materialCode', 'quantity', 'locationCode', 'batchNo', 'expireDate'],
   outbound: ['materialCode', 'quantity', 'locationCode', 'batchNo'],
-  check: ['materialCode', 'locationCode', 'batchNo']
+  check: ['materialCode', 'locationCode', 'batchNo'],
+  adjust: ['materialCode', 'adjustQuantity', 'locationCode', 'batchNo', 'reason']
 }
 
 export const PASTE_COLUMN_LABELS = {
@@ -13,7 +16,9 @@ export const PASTE_COLUMN_LABELS = {
   quantity: '数量',
   locationCode: '库位编码',
   batchNo: '批次',
-  expireDate: '效期'
+  expireDate: '效期',
+  adjustQuantity: '调整量（减少填负数）',
+  reason: '原因（可空，默认取调整类型）'
 }
 
 const pad = (n) => String(n).padStart(2, '0')
@@ -30,7 +35,7 @@ export function normalizeDate(value) {
 
 /**
  * @param {string} text 粘贴的文本
- * @param {{ kind: 'inbound'|'outbound'|'check', materialsByCode: Map, locationsByCode: Map, warehouseId?: number }} ctx
+ * @param {{ kind: 'inbound'|'outbound'|'check'|'adjust', materialsByCode: Map, locationsByCode: Map, warehouseId?: number }} ctx
  * @returns {Array<object>} 明细行；无法识别的字段留空，行上 _errors 列出原因（可在表格中修正后保存）
  */
 export function parsePastedLines(text, { kind, materialsByCode, locationsByCode, warehouseId }) {
@@ -67,6 +72,21 @@ export function parsePastedLines(text, { kind, materialsByCode, locationsByCode,
       } else {
         line.quantity = qty
       }
+    }
+    if (columns.includes('adjustQuantity')) {
+      const qty = Number(raw.adjustQuantity.replace(/,/g, ''))
+      if (!raw.adjustQuantity || !Number.isInteger(qty) || qty === 0) {
+        errors.push(`调整量「${raw.adjustQuantity}」须为非 0 整数（减少填负数）`)
+        line.quantity = null
+      } else {
+        line.quantity = qty
+      }
+    }
+    if (columns.includes('reason') && raw.reason) {
+      // 原因可填编码或中文名；空白时不设置，由编辑表按单头调整类型补默认值
+      const reason = ADJUST_TYPE.find((t) => t.value === raw.reason.toUpperCase() || t.label === raw.reason)
+      if (reason) line.reason = reason.value
+      else errors.push(`原因「${raw.reason}」不存在，可选：${ADJUST_TYPE.map((t) => t.label).join(' / ')}`)
     }
     if (columns.includes('expireDate')) {
       line.expireDate = raw.expireDate ? normalizeDate(raw.expireDate) : null

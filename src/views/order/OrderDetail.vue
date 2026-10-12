@@ -3,7 +3,7 @@
     <PageHeader :title="order ? `${cfg.label} ${order[cfg.codeKey]}` : cfg.label" :subtitle="subtitle">
       <template #actions>
         <el-button @click="goBack">返回</el-button>
-        <template v-if="cfg.kind !== 'check'">
+        <template v-if="printable">
           <el-button v-perm="cfg.perm('list')" :icon="Printer" :disabled="!order" @click="printPdf('ORDER')"
             >打印</el-button
           >
@@ -38,7 +38,9 @@
               dictLabel(cfg.statusDict, order.status)
             }}</el-tag></el-descriptions-item
           >
-          <el-descriptions-item label="类型">{{ optionLabel(cfg.typeDict, order[cfg.typeKey]) }}</el-descriptions-item>
+          <el-descriptions-item :label="cfg.typeLabel || '类型'">{{
+            optionLabel(cfg.typeDict, order[cfg.typeKey])
+          }}</el-descriptions-item>
           <el-descriptions-item label="仓库">{{ dash(order.warehouseName) }}</el-descriptions-item>
           <el-descriptions-item label="货主">{{ dash(order.ownerName) }}</el-descriptions-item>
           <el-descriptions-item v-if="cfg.party" :label="cfg.party.label">{{
@@ -55,6 +57,12 @@
           >
           <el-descriptions-item label="最后修改"
             >{{ dash(order.updateByName) }} · {{ formatDateTime(order.updateTime) }}</el-descriptions-item
+          >
+          <el-descriptions-item v-if="isAdjust" label="审批">{{
+            order.approveByName ? `${order.approveByName} · ${formatDateTime(order.approveTime)}` : '-'
+          }}</el-descriptions-item>
+          <el-descriptions-item v-if="isAdjust && order.rejectReason" label="驳回原因" :span="3"
+            ><span class="text-danger">{{ order.rejectReason }}</span></el-descriptions-item
           >
           <el-descriptions-item label="备注" :span="3">{{ dash(order.remark) }}</el-descriptions-item>
         </el-descriptions>
@@ -76,7 +84,7 @@
               />
               <el-table-column v-if="cfg.kind !== 'check'" prop="unit" label="单位" width="70" align="center" />
               <el-table-column
-                v-if="cfg.kind !== 'check'"
+                v-if="cfg.kind !== 'check' && !isAdjust"
                 prop="quantity"
                 label="数量"
                 width="100"
@@ -84,6 +92,18 @@
                 class-name="num"
                 :formatter="tableQty"
               />
+              <template v-if="isAdjust">
+                <el-table-column prop="quantity" label="调整量" width="100" align="right" class-name="num">
+                  <template #default="{ row }"
+                    ><span :class="row.quantity > 0 ? 'text-success' : 'text-danger'">{{
+                      signedQty(row.quantity)
+                    }}</span></template
+                  >
+                </el-table-column>
+                <el-table-column label="原因" width="80" align="center"
+                  ><template #default="{ row }">{{ optionLabel(ADJUST_TYPE, row.reason) }}</template></el-table-column
+                >
+              </template>
               <el-table-column label="库位" min-width="110" show-overflow-tooltip>
                 <template #default="{ row }">{{ row.locationCode || locationCode(row.locationId) }}</template>
               </el-table-column>
@@ -108,6 +128,11 @@
                   >
                 </el-table-column>
               </template>
+              <el-table-column v-if="isAdjust" label="可用（前 → 后）" width="140" align="right" class-name="num"
+                ><template #default="{ row }">{{
+                  row.beforeQty == null ? '审批后显示' : `${formatQty(row.beforeQty)} → ${formatQty(row.afterQty)}`
+                }}</template></el-table-column
+              >
               <el-table-column
                 prop="remark"
                 label="备注"
@@ -126,7 +151,9 @@
                 ><template #default="{ row }">{{ formatDateTime(row.createTime) }}</template></el-table-column
               >
               <el-table-column label="类型" width="80" align="center"
-                ><template #default="{ row }">{{ TXN_LABELS[row.txnType] || row.txnType }}</template></el-table-column
+                ><template #default="{ row }">{{
+                  optionLabel(INVENTORY_TXN_TYPE, row.txnType)
+                }}</template></el-table-column
               >
               <el-table-column prop="productCode" label="物料编码" min-width="110" />
               <el-table-column label="库位" min-width="100"
@@ -173,7 +200,7 @@ import { formatDateTime } from '@/utils'
 import { dash, tableDash, formatQty, tableQty } from '@/utils/format'
 import { downloadFile, openPdf } from '@/utils/download'
 import { pdfUrl } from '@/api'
-import { dictLabel, dictType, optionLabel } from '@/constants/dict'
+import { dictLabel, dictType, optionLabel, ADJUST_TYPE, INVENTORY_TXN_TYPE } from '@/constants/dict'
 import { listLocation } from '@/router/listMemory'
 import { ORDER_KINDS } from './orderKinds'
 
@@ -197,12 +224,16 @@ const tab = ref('lines')
 const lines = computed(() => order.value?.lines || [])
 const id = computed(() => Number(route.params.id))
 
-const TXN_LABELS = { IN: '入库', OUT: '出库', FREEZE: '冻结', RELEASE: '释放', ADJUST: '调整', MOVE: '移库' }
-const subtitle = computed(() =>
-  order.value?.status === 'DRAFT'
-    ? '草稿可编辑；审核后明细不可再修改'
-    : '操作记录见「状态记录」，库存变动见「库存流水」'
-)
+const isAdjust = cfg.kind === 'adjust'
+// 入库 / 出库单有打印模板（后端 PDF）
+const printable = cfg.kind === 'inbound' || cfg.kind === 'outbound'
+const subtitle = computed(() => {
+  const status = order.value?.status
+  if (isAdjust && status === 'DRAFT') return '草稿可编辑；提交后由其他有审批权限的人员审批'
+  if (isAdjust && status === 'PENDING') return '待审批：审批通过后按明细调整库存；创建人不能审批自己的单'
+  return status === 'DRAFT' ? '草稿可编辑；审核后明细不可再修改' : '操作记录见「状态记录」，库存变动见「库存流水」'
+})
+const signedQty = (q) => (Number(q) > 0 ? `+${formatQty(q)}` : formatQty(q))
 
 const load = async () => {
   loading.value = true
@@ -260,6 +291,11 @@ const diffClass = (row) => {
 const summary = ({ columns, data }) =>
   columns.map((col, i) => {
     if (i === 0) return '合计'
+    if (col.property === 'quantity' && isAdjust) {
+      const inc = data.reduce((s, r) => s + Math.max(Number(r.quantity) || 0, 0), 0)
+      const dec = data.reduce((s, r) => s + Math.max(-(Number(r.quantity) || 0), 0), 0)
+      return `+${formatQty(inc)} / -${formatQty(dec)}`
+    }
     if (col.property === 'quantity') return formatQty(data.reduce((s, r) => s + (Number(r.quantity) || 0), 0))
     return ''
   })

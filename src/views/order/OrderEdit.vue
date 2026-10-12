@@ -42,7 +42,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item :label="`${cfg.label.slice(0, 2)}类型`" prop="type">
+            <el-form-item :label="cfg.typeLabel || `${cfg.label.slice(0, 2)}类型`" prop="type">
               <el-select v-model="header.type" style="width: 100%">
                 <el-option v-for="t in cfg.typeDict" :key="t.value" :label="t.label" :value="t.value" />
               </el-select>
@@ -72,8 +72,8 @@
             </el-form-item>
           </el-col>
           <el-col :span="cfg.kind === 'check' ? 16 : 24">
-            <el-form-item label="备注">
-              <el-input v-model="header.remark" maxlength="512" placeholder="选填，可清空" />
+            <el-form-item label="备注" prop="remark">
+              <el-input v-model="header.remark" maxlength="512" :placeholder="remarkPlaceholder" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -90,6 +90,8 @@
         :mode="countMode ? 'count' : 'edit'"
         :warehouse-id="header.warehouseId"
         :server-errors="serverErrors"
+        :owner-id="header.ownerId"
+        :default-reason="cfg.kind === 'adjust' ? header.type : null"
       />
     </el-card>
   </div>
@@ -149,12 +151,22 @@ const subtitle = computed(() =>
   countMode.value ? '只能录入实盘量与备注；保存后可在详情页「完成盘点」' : '单头与明细一起保存；草稿状态下可反复修改'
 )
 const headerAreas = computed(() => areas.value.filter((a) => a.warehouseId === header.warehouseId))
+// 调整单：调整类型为「其他」时备注必填（后端同样校验）
+const remarkRequired = computed(() => cfg.kind === 'adjust' && header.type === 'OTHER')
+const remarkPlaceholder = computed(() => (remarkRequired.value ? '调整类型为「其他」时必填' : '选填，可清空'))
 
 const rules = {
   warehouseId: [{ required: true, message: '请选择仓库', trigger: 'change' }],
   ownerId: [{ required: true, message: '请选择货主', trigger: 'change' }],
   type: [{ required: true, message: '请选择类型', trigger: 'change' }],
-  ...(cfg.party?.required ? { party: [{ required: true, message: `请输入${cfg.party.label}`, trigger: 'blur' }] } : {})
+  ...(cfg.party?.required ? { party: [{ required: true, message: `请输入${cfg.party.label}`, trigger: 'blur' }] } : {}),
+  remark: [
+    {
+      validator: (rule, value, callback) =>
+        remarkRequired.value && !String(value || '').trim() ? callback(new Error('请填写备注')) : callback(),
+      trigger: 'blur'
+    }
+  ]
 }
 
 const state = () => JSON.stringify({ header, lines: lines.value })
@@ -231,6 +243,7 @@ const toPayload = () => ({
     skuId: l.skuId,
     locationId: l.locationId,
     ...(cfg.kind !== 'check' ? { quantity: l.quantity } : {}),
+    ...(cfg.kind === 'adjust' ? { reason: l.reason || null } : {}),
     batchNo: l.batchNo || null,
     ...(cfg.kind === 'inbound' ? { expireDate: l.expireDate || null } : {}),
     remark: l.remark || null
@@ -243,8 +256,13 @@ const save = async () => {
     const ok = await formRef.value.validate().catch(() => false)
     if (!ok) return
     if (!lines.value.length) return ElMessage.warning('请至少添加一行明细')
-    const pending = lines.value.filter((l) => l._errors?.length || !l.skuId || !l.locationId).length
-    if (pending) return ElMessage.warning(`有 ${pending} 行明细未完成（物料、库位必填，标红行需修正）`)
+    const incomplete = (l) =>
+      l._errors?.length || !l.skuId || !l.locationId || (cfg.kind === 'adjust' && (!l.reason || !Number(l.quantity)))
+    const pending = lines.value.filter(incomplete).length
+    if (pending) {
+      const required = cfg.kind === 'adjust' ? '物料、库位、调整量（不能为 0）、原因必填' : '物料、库位必填'
+      return ElMessage.warning(`有 ${pending} 行明细未完成（${required}，标红行需修正）`)
+    }
   }
   saving.value = true
   try {

@@ -14,6 +14,7 @@
         }}</el-tag>
       </div>
       <div class="log-meta">{{ dash(log.createByName) }}</div>
+      <div v-if="log.remark" class="log-remark">{{ log.action === 'REJECT' ? '驳回原因：' : '' }}{{ log.remark }}</div>
     </el-timeline-item>
     <el-timeline-item v-if="!logs.length" placement="top" type="info">
       <div class="log-meta">上线前创建的单据没有状态日志，更早的操作记录不可追溯</div>
@@ -28,7 +29,7 @@ import { dash } from '@/utils/format'
 import { dictLabel, dictType } from '@/constants/dict'
 
 /**
- * 单据状态时间线：后端 t_doc_status_log 按时间正序
+ * 单据状态时间线：后端 t_doc_status_log 按时间正序；有备注（如驳回原因）时显示在操作人下方
  * 历史单据没有日志时，用单头的创建时间 / 创建人显示一条「创建」
  */
 const props = defineProps({
@@ -48,7 +49,10 @@ const ACTION_LABELS = {
   START_COUNT: '开始盘点',
   FINISH_COUNT: '完成盘点',
   POST: '过账',
-  COUNT: '录入实盘'
+  COUNT: '录入实盘',
+  SUBMIT: '提交审批',
+  APPROVE: '审批通过并过账',
+  REJECT: '驳回'
 }
 const actionLabel = (log) => ACTION_LABELS[log.action] || dictLabel(props.statusDict, log.toStatus, log.action)
 
@@ -66,6 +70,11 @@ const items = computed(() =>
   gap: 8px;
   font-weight: 600;
   color: var(--brand-secondary);
+}
+.log-remark {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--wms-color-danger);
 }
 .log-meta {
   margin-top: 4px;

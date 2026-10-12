@@ -120,6 +120,7 @@ const routes = [
       ...orderRoutes('inbound', 'Inbound', '入库', () => import('@/views/inbound/index.vue')),
       ...orderRoutes('outbound', 'Outbound', '出库', () => import('@/views/outbound/index.vue')),
       ...orderRoutes('check', 'Check', '盘点', () => import('@/views/check/index.vue')),
+      ...orderRoutes('adjust', 'Adjust', '库存调整', () => import('@/views/adjust/index.vue')),
 
       // 系统
       {

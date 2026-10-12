@@ -2,7 +2,10 @@
   <div class="line-editor">
     <div class="line-toolbar">
       <span class="line-summary"
-        >共 {{ modelValue.length }} 行<template v-if="hasQuantity">
+        >共 {{ modelValue.length }} 行<template v-if="isAdjust">
+          · 调增 <span class="num text-success">{{ formatQty(adjustTotals.increase) }}</span> · 调减
+          <span class="num text-danger">{{ formatQty(adjustTotals.decrease) }}</span></template
+        ><template v-else-if="hasQuantity">
           · 数量合计 <span class="num">{{ formatQty(totalQuantity) }}</span></template
         ><template v-if="errorRows">
           · <span class="text-danger">{{ errorRows }} 行待修正</span></template
@@ -33,17 +36,25 @@
       <el-table-column v-if="kind !== 'check'" label="单位" width="70" align="center">
         <template #default="{ row }">{{ dash(row.unit) }}</template>
       </el-table-column>
-      <el-table-column v-if="hasQuantity" label="数量" width="130" align="right">
+      <el-table-column v-if="hasQuantity" :label="isAdjust ? '调整量' : '数量'" width="130" align="right">
         <template #default="{ row }">
           <el-input-number
             v-model="row.quantity"
-            :min="1"
+            :min="isAdjust ? undefined : 1"
             :step="1"
             step-strictly
             controls-position="right"
+            :placeholder="isAdjust ? '减少填负数' : ''"
             style="width: 100%"
-            @change="clearErrors(row, '数量')"
+            @change="clearErrors(row, isAdjust ? '调整量' : '数量')"
           />
+        </template>
+      </el-table-column>
+      <el-table-column v-if="isAdjust" label="原因" width="110">
+        <template #default="{ row }">
+          <el-select v-model="row.reason" placeholder="原因" style="width: 100%" @change="clearErrors(row, '原因')">
+            <el-option v-for="t in ADJUST_TYPE" :key="t.value" :label="t.label" :value="t.value" />
+          </el-select>
         </template>
       </el-table-column>
       <el-table-column label="库位" min-width="160">
@@ -65,6 +76,15 @@
         <template #default="{ row }">
           <el-input v-if="mode === 'edit'" v-model="row.batchNo" placeholder="选填" />
           <span v-else>{{ dash(row.batchNo) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column v-if="isAdjust" label="可用（当前 → 调整后）" width="170" align="right" class-name="num">
+        <template #default="{ row }">
+          <template v-if="availableOf(row) != null"
+            >{{ formatQty(availableOf(row)) }} →
+            <span :class="{ 'text-danger': afterOf(row) < 0 }">{{ formatQty(afterOf(row)) }}</span></template
+          >
+          <span v-else>-</span>
         </template>
       </el-table-column>
       <el-table-column v-if="kind === 'inbound'" label="效期" width="150">
@@ -128,10 +148,12 @@
 </template>
 
 <script setup>
-import { computed, reactive } from 'vue'
+import { computed, reactive, ref, watch, onBeforeUnmount } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Plus, Delete, DocumentCopy, WarningFilled } from '@element-plus/icons-vue'
 import { useRefDataStore } from '@/stores/refData'
+import { adjustApi } from '@/api'
+import { ADJUST_TYPE } from '@/constants/dict'
 import { dash, formatQty } from '@/utils/format'
 import { parsePastedLines, PASTE_COLUMNS, PASTE_COLUMN_LABELS } from './lineParser'
 
@@ -139,15 +161,19 @@ import { parsePastedLines, PASTE_COLUMNS, PASTE_COLUMN_LABELS } from './linePars
  * 单据明细编辑表（编辑页使用）
  * - mode=edit：整单编辑（物料、数量、库位、批次、效期、备注），可从 Excel 粘贴批量追加
  * - mode=count：盘点中只录实盘量与备注，其余只读
+ * - kind=adjust：调整量带符号（减少填负数）、每行一个原因（新行默认取单头调整类型），并显示当前可用 → 调整后（只读参考，
+ *   按货主 + 物料 + 库位 + 批次查询；审批时后端以当时的可用量为准再校验一次）
  * - 物料 / 库位用虚拟列表下拉（el-select-v2），库位只列出单头仓库下的库位
  * - 行错误来源：粘贴解析的 _errors + 后端整单保存返回的行错误（serverErrors，line 从 1 开始）
  */
 const props = defineProps({
   modelValue: { type: Array, required: true },
-  kind: { type: String, required: true }, // inbound / outbound / check
+  kind: { type: String, required: true }, // inbound / outbound / check / adjust
   mode: { type: String, default: 'edit' }, // edit / count
   warehouseId: { type: Number, default: null },
-  serverErrors: { type: Array, default: () => [] }
+  serverErrors: { type: Array, default: () => [] },
+  ownerId: { type: Number, default: null }, // 调整单：查询可用量
+  defaultReason: { type: String, default: null } // 调整单：新行的默认原因
 })
 const emit = defineEmits(['update:modelValue'])
 
@@ -155,6 +181,7 @@ const refData = useRefDataStore()
 const { materials, locations } = storeToRefs(refData)
 const { locationCode } = refData
 
+const isAdjust = computed(() => props.kind === 'adjust')
 const hasQuantity = computed(() => props.kind !== 'check' && props.mode === 'edit')
 const materialOptions = computed(() =>
   materials.value.map((m) => ({ value: m.id, label: `${m.materialCode} ${m.materialName}` }))
@@ -164,6 +191,46 @@ const locationOptions = computed(() =>
   warehouseLocations.value.map((l) => ({ value: l.id, label: `${l.locationCode} ${l.locationName || ''}`.trim() }))
 )
 const totalQuantity = computed(() => props.modelValue.reduce((sum, l) => sum + (Number(l.quantity) || 0), 0))
+const adjustTotals = computed(() =>
+  props.modelValue.reduce(
+    (t, l) => {
+      const q = Number(l.quantity) || 0
+      return q > 0 ? { ...t, increase: t.increase + q } : { ...t, decrease: t.decrease - q }
+    },
+    { increase: 0, decrease: 0 }
+  )
+)
+
+// 调整单：当前可用量（录入参考）。明细维度或货主变化后 300ms 批量查询一次
+const availability = ref(new Map())
+const dimKey = (l) => `${l.skuId}|${l.locationId}|${(l.batchNo || '').trim()}`
+const availableOf = (row) => (row.skuId && row.locationId ? (availability.value.get(dimKey(row)) ?? null) : null)
+const afterOf = (row) => Number(availableOf(row)) + (Number(row.quantity) || 0)
+const loadAvailable = async () => {
+  const items = [
+    ...new Map(props.modelValue.filter((l) => l.skuId && l.locationId).map((l) => [dimKey(l), l])).values()
+  ].map((l) => ({ skuId: l.skuId, locationId: l.locationId, batchNo: (l.batchNo || '').trim() }))
+  if (!props.ownerId || !items.length) {
+    availability.value = new Map()
+    return
+  }
+  try {
+    const res = await adjustApi.available({ ownerId: props.ownerId, items })
+    availability.value = new Map((res || []).map((r) => [dimKey(r), Number(r.quantity)]))
+  } catch (e) {
+    // 错误提示已由请求拦截器处理；可用量只是参考，不影响录入
+  }
+}
+let availableTimer = null
+watch(
+  () => (isAdjust.value && props.mode === 'edit' ? `${props.ownerId}#${props.modelValue.map(dimKey).join(',')}` : ''),
+  (sig) => {
+    clearTimeout(availableTimer)
+    if (sig) availableTimer = setTimeout(loadAvailable, 300)
+  },
+  { immediate: true }
+)
+onBeforeUnmount(() => clearTimeout(availableTimer))
 
 const serverErrorsByLine = computed(() => {
   const map = new Map()
@@ -179,7 +246,8 @@ const emptyLine = () => ({
   productCode: '',
   productName: '',
   unit: '',
-  quantity: props.kind === 'check' ? undefined : 1,
+  quantity: props.kind === 'check' ? undefined : isAdjust.value ? null : 1,
+  ...(isAdjust.value ? { reason: props.defaultReason } : {}),
   locationId: null,
   batchNo: '',
   expireDate: null,
@@ -213,7 +281,7 @@ const applyPaste = () => {
     materialsByCode: new Map(materials.value.map((m) => [m.materialCode, m])),
     locationsByCode: new Map(locations.value.map((l) => [l.locationCode, l])),
     warehouseId: props.warehouseId
-  }).map((l) => ({ ...emptyLine(), ...l }))
+  }).map((l) => ({ ...emptyLine(), ...l, ...(isAdjust.value && !l.reason ? { reason: props.defaultReason } : {}) }))
   emit('update:modelValue', [...props.modelValue, ...lines])
   paste.text = ''
   paste.visible = false

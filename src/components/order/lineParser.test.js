@@ -44,6 +44,22 @@ describe('parsePastedLines', () => {
     expect(line).not.toHaveProperty('quantity')
   })
 
+  it('调整单：调整量可为负、不能为 0，原因可填中文名或编码，空白不设置', () => {
+    const lines = parsePastedLines(
+      'M001\t-3\tA-01\t\t报损\nM001\t2\tA-01\tB9\tsurplus\nM001\t0\tA-01\t\t\nM001\t1\tA-01\t\t损坏',
+      {
+        ...ctx,
+        kind: 'adjust'
+      }
+    )
+    expect(lines[0]).toMatchObject({ skuId: 1, quantity: -3, locationId: 10, reason: 'DAMAGE', _errors: [] })
+    expect(lines[1]).toMatchObject({ quantity: 2, batchNo: 'B9', reason: 'SURPLUS', _errors: [] })
+    expect(lines[2].quantity).toBeNull()
+    expect(lines[2]).not.toHaveProperty('reason')
+    expect(lines[2]._errors).toEqual(['调整量「0」须为非 0 整数（减少填负数）'])
+    expect(lines[3]._errors[0]).toContain('原因「损坏」不存在')
+  })
+
   it('normalizeDate 校验真实日期', () => {
     expect(normalizeDate('2026.1.5')).toBe('2026-01-05')
     expect(normalizeDate('2026-13-01')).toBeNull()

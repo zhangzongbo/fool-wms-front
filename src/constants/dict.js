@@ -37,6 +37,14 @@ export const CHECK_STATUS = {
   CANCELLED: { label: '已取消', type: 'danger' }
 }
 
+// 库存调整单状态机（spec #16）：DRAFT→PENDING→APPROVED（审批即过账），PENDING 可驳回回 DRAFT，DRAFT / PENDING 可取消
+export const ADJUST_STATUS = {
+  DRAFT: { label: '草稿', type: 'info' },
+  PENDING: { label: '待审批', type: 'warning' },
+  APPROVED: { label: '已审批', type: 'success' },
+  CANCELLED: { label: '已取消', type: 'danger' }
+}
+
 // 货主状态（VARCHAR，商用约定）
 export const OWNER_STATUS = {
   ENABLED: { label: '合作中', type: 'success' },
@@ -77,6 +85,33 @@ export const CHECK_TYPE = [
   { value: 'FULL', label: '全盘' },
   { value: 'SPOT', label: '抽盘' },
   { value: 'DYNAMIC', label: '动态盘点' }
+]
+
+// 库存调整类型 / 明细原因（同一字典，与后端 AdjustTypeEnum 一致）：direction -1 只能减少、1 只能增加、0 不限；其他须填备注
+export const ADJUST_TYPE = [
+  { value: 'DAMAGE', label: '报损', direction: -1 },
+  { value: 'LOSS', label: '丢失', direction: -1 },
+  { value: 'SURPLUS', label: '报溢', direction: 1 },
+  { value: 'CORRECTION', label: '纠错', direction: 0 },
+  { value: 'OTHER', label: '其他', direction: 0 }
+]
+
+// 库存流水类型（t_inventory_transaction.txn_type）
+export const INVENTORY_TXN_TYPE = [
+  { value: 'IN', label: '入库', type: 'success' },
+  { value: 'OUT', label: '出库', type: 'primary' },
+  { value: 'FREEZE', label: '冻结', type: 'warning' },
+  { value: 'RELEASE', label: '释放', type: 'info' },
+  { value: 'ADJUST', label: '调整', type: 'danger' },
+  { value: 'MOVE', label: '移库', type: 'info' }
+]
+
+// 流水来源单据类型（t_inventory_transaction.source_type）
+export const TXN_SOURCE_TYPE = [
+  { value: 'INBOUND', label: '入库单' },
+  { value: 'OUTBOUND', label: '出库单' },
+  { value: 'CHECK', label: '盘点单' },
+  { value: 'ADJUST', label: '调整单' }
 ]
 
 // 库区类型
