@@ -30,6 +30,14 @@
       <div class="login-card">
         <h2 class="login-title">欢迎登录</h2>
         <p class="login-subtitle">请输入账号信息以进入管理后台</p>
+        <el-alert
+          v-if="expired"
+          class="login-expired"
+          title="登录已过期，请重新登录"
+          type="warning"
+          :closable="false"
+          show-icon
+        />
 
         <el-form ref="formRef" :model="form" :rules="rules" size="large" @keyup.enter="handleLogin">
           <el-form-item prop="username">
@@ -66,6 +74,8 @@ import { User, Lock, Select, InfoFilled } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
+// 请求拦截器在会话过期时带 expired=1 跳转过来（见 utils/request.handleUnauthorized）
+const expired = route.query.expired === '1'
 const router = useRouter()
 const userStore = useUserStore()
 
@@ -235,6 +245,9 @@ const handleLogin = async () => {
   letter-spacing: 4px;
   margin-top: 8px;
   border-radius: var(--wms-radius-lg);
+}
+.login-expired {
+  margin-bottom: 16px;
 }
 .login-tip {
   margin-top: 24px;

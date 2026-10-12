@@ -198,7 +198,7 @@ const rules = {
   realName: [{ required: true, message: '请输入姓名', trigger: 'blur' }]
 }
 const handleDelete = (row) =>
-  confirmAction(`确定删除用户「${row.username}」吗？`, () => userApi.delete(row.id), {
+  confirmAction(`确定删除用户「${row.username}」吗？删除后该登录名不可再用于新用户。`, () => userApi.delete(row.id), {
     successText: '删除成功',
     onSuccess: reload
   })

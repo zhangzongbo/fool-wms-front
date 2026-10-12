@@ -44,7 +44,7 @@ request.interceptors.response.use(
       return Promise.reject(new Error(message || '登录已失效'))
     }
 
-    ElMessage.error(message || '请求失败')
+    showBizError(message || '请求失败')
     // 保留业务码与数据：如整单保存的行错误（code=400，data=[{ line, field, message }]）
     return Promise.reject(Object.assign(new Error(message || '请求失败'), { code, data }))
   },
@@ -80,17 +80,28 @@ request.interceptors.response.use(
   }
 )
 
+/**
+ * 业务错误提示：较长的说明（如删除被拒绝时列出的多条原因）停留更久并可手动关闭
+ */
+function showBizError(message) {
+  const long = message.length > 30
+  ElMessage.error({ message, duration: long ? 8000 : 3000, showClose: long })
+}
+
 let redirecting = false
+/**
+ * 登录过期（超时、2 小时无操作、被踢下线）：清除本地登录态并带原路径跳转登录页（整页跳转，
+ * 弹出的提示会随之消失，所以带 expired=1 由登录页显示「登录已过期」）。
+ * 页面上往往同时有多个请求返回 401，只跳转一次
+ */
 export function handleUnauthorized() {
-  ElMessage.error('登录已失效，请重新登录')
   localStorage.removeItem('token')
   localStorage.removeItem('tokenName')
   localStorage.removeItem('userInfo')
-  if (!redirecting && !location.pathname.startsWith('/login')) {
-    redirecting = true
-    const redirect = encodeURIComponent(location.pathname + location.search)
-    location.href = `/login?redirect=${redirect}`
-  }
+  if (redirecting || location.pathname.startsWith('/login')) return
+  redirecting = true
+  const redirect = encodeURIComponent(location.pathname + location.search)
+  location.href = `/login?redirect=${redirect}&expired=1`
 }
 
 export default request
