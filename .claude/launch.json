@@ -4,9 +4,31 @@
     {
       "name": "fool-wms-front",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 5174,
       "autoPort": true
+    },
+    {
+      "name": "fool-wms-server-e2e",
+      "runtimeExecutable": "/bin/bash",
+      "runtimeArgs": [
+        "-c",
+        "export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_341.jdk/Contents/Home && cd /Users/zhangzongbo/ideaProject/fool-wms && mvn -q -o -pl fool-wms-server -am package -DskipTests && mvn -q -o -pl fool-wms-server dependency:build-classpath -Dmdep.outputFile=/private/tmp/claude-501/-Users-zhangzongbo-ideaProject-fool-wms-front/74b22841-9775-4608-8329-101390488cbc/scratchpad/wms-cp.txt && cd /private/tmp/claude-501/-Users-zhangzongbo-ideaProject-fool-wms-front/74b22841-9775-4608-8329-101390488cbc/scratchpad/e2e-run && $JAVA_HOME/bin/java -cp /Users/zhangzongbo/ideaProject/fool-wms/fool-wms-server/target/classes:/Users/zhangzongbo/ideaProject/fool-wms/fool-wms-common/target/fool-wms-common-1.0-SNAPSHOT.jar:$(cat /private/tmp/claude-501/-Users-zhangzongbo-ideaProject-fool-wms-front/74b22841-9775-4608-8329-101390488cbc/scratchpad/wms-cp.txt) com.fool.wms.ServerApplication --server.port=18081"
+      ],
+      "port": 18081,
+      "url": "http://localhost:18081"
+    },
+    {
+      "name": "fool-wms-front-e2e",
+      "runtimeExecutable": "/bin/bash",
+      "runtimeArgs": [
+        "-c",
+        "cd /Users/zhangzongbo/ideaProject/fool-wms-front && npx vite --config /private/tmp/claude-501/-Users-zhangzongbo-ideaProject-fool-wms-front/74b22841-9775-4608-8329-101390488cbc/scratchpad/vite.e2e.config.mjs"
+      ],
+      "port": 5176
     }
   ]
 }

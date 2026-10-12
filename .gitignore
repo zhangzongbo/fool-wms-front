@@ -27,5 +27,6 @@ dist-ssr
 coverage
 
 # Claude Code 个人配置与临时工作区（launch.json 为项目预览配置，需提交）
+.claude/*
 .claude/settings.local.json
 .claude/worktrees
